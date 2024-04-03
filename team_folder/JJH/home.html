@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEME</title>
+    <style>
+        /* 스타일링은 선택사항입니다. */
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        footer {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        img {
+            max-width: 50%;
+            /* 이미지의 최대 너비를 부모 요소의 너비에 맞게 조정합니다. */
+            height: 300px;
+            /* 이미지의 높이를 자동으로 조정하여 가로세로 비율을 유지합니다. */
+            display: block;
+            /* 이미지를 블록 레벨 요소로 설정하여 다른 요소와 수직으로 정렬합니다. */
+            margin: 0 auto;
+            /* 이미지를 수평으로 가운데 정렬합니다. */
+        }
+
+        .section-buttons {
+            margin-top: 10px;
+            /* 버튼 사이의 간격을 조정합니다. */
+
+        }
+
+        .section-buttons button {
+            margin-right: 10px;
+            /* 버튼 사이의 간격을 조정합니다. */
+        }
+
+        .btn {
+           /* 버튼 위치 조정 필요*/
+        }
+        .card__inner {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        
+
+        
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>MEME</h1>
+    </header>
+
+
+
+    <main>
+        <section>
+            <div class="section-buttons">
+                <button type="button" class="btn btn-secondary">홈전체</button>
+                <button type="button" class="btn btn-secondary">연도별</button>
+                <button type="button" class="btn btn-success">글쓰기</button>
+
+                <form action="검색 결과 페이지 URL" method="GET">
+                    <label for="search">검색어 입력:</label>
+                    <input type="text" id="search" name="q" placeholder="검색어를 입력하세요" required>
+                    <button type="submit">검색</button>
+                </form>
+                
+            </div>
+
+        </section>
+        
+        <section>
+            <div class="card__inner container">
+                <article class="card">
+                    <figure class="card__header">
+                        <img class="img" src="https://webstoryboy.github.io/web2022/webs_img/card_bg01.jpg" alt="이미지1">
+                    </figure>
+                    <div class="card__body">
+                        <h3 class="title">밈밈밈</h3>
+                        <p class="desc">밈내용.</p>
+                        <a class="btn" href="#">
+                            더 자세히 보기
+                            <svg width="52" height="8" viewBox="0 0 52 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                
+                            </svg>
+                        </a>
+                    </div>
+                </article>
+                <article class="card">
+                    <figure class="card__header">
+                        <img class="img" src="https://webstoryboy.github.io/web2022/webs_img/card_bg02.jpg" alt="이미지2">
+                    </figure>
+                    <div class="card__body">
+                        <h3 class="title">밈밈밈</h3>
+                        <p class="desc">밈내용..</p>
+                        <a class="btn" href="#">
+                            더 자세히 보기
+                            <svg width="52" height="8" viewBox="0 0 52 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                
+                            </svg>
+                        </a>
+                    </div>
+                </article>
+                <article class="card">
+                    <figure class="card__header">
+                        <img class="img" src="https://webstoryboy.github.io/web2022/webs_img/card_bg03.jpg" alt="이미지3">
+                    </figure>
+                    <div class="card__body">
+                        <h3 class="title">밈밈밈.</h3>
+                        <p class="desc">밈내용..</p>
+                        <a class="btn" href="#">
+                            더 자세히 보기
+                            <svg width="52" height="8" viewBox="0 0 52 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                               
+                            </svg>
+                        </a>
+                    </div>
+                    
+                </article>
+            </div>
+        </section>
+
+
+        <section>
+            <h2>Section 2</h2>
+            <p>This is the content of section 2.</p>
+            
+        </section>
+        <!-- 웹 페이지의 본문 내용이 여기에 들어갑니다. -->
+        <p>This is the main content of the webpage.</p>
+    </main>
+
+
+    <footer>
+        <div class="footer-bottom">
+            <p class="footer-desc">
+                &copy; Team : Hot Six Mini-project
+            </p>
+        </div>
+        </div>
+    </footer>
+
+
+
+</body>
+
+</html>
