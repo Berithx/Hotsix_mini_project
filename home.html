@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEME</title>
+    <style>
+        /* 스타일링은 선택사항입니다. */
+        header {
+            background-color: #FFFFFF;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 5px solid #333;
+            /* 밑줄 스타일을 지정합니다. */
+        }
+
+        footer {
+            background-color: #333;
+            color: #FFFFFF;
+            padding: 10px;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        img {
+            max-width: 50%;
+            /* 이미지의 최대 너비를 부모 요소의 너비에 맞게 조정합니다. */
+            height: 150px;
+            /* 이미지의 높이를 자동으로 조정하여 가로세로 비율을 유지합니다. */
+            display: block;
+            /* 이미지를 블록 레벨 요소로 설정하여 다른 요소와 수직으로 정렬합니다. */
+            margin: 0 auto;
+            /* 이미지를 수평으로 가운데 정렬합니다. */
+            overflow: hidden;
+            border: 5px solid black;
+        }
+
+
+        .btn {
+            /* 버튼의 기본 스타일 */
+            padding: 10px 20px;
+            /* 버튼의 내부 패딩을 조정합니다. */
+            font-size: 16px;
+            /* 버튼의 폰트 크기를 설정합니다. */
+            border-radius: 5px;
+            /* 버튼의 모서리를 둥글게 만듭니다. */
+            color: #000000;
+            /* 버튼의 글씨색을 검은색으로 설정합니다. */
+            
+        }
+
+        .btn-outline-light {
+            /* 테두리만 있는 버튼의 스타일 */
+            color: #000000;
+            /* 텍스트 색상을 지정합니다. */
+            background-color: #CCCCCC;
+            /* 배경색을 회색으로 설정합니다. */
+            border: 1px solid #CCCCCC;
+            /* 테두리 스타일을 지정합니다. */
+        }
+
+
+        .section-buttons {
+            margin-top: 10px;
+            /* 버튼 사이의 간격을 조정합니다. */
+        }
+
+        .section-buttons button {
+            margin-right: 10px;
+            /* 버튼 사이의 간격을 조정합니다. */
+        }
+
+
+        .card__inner {
+            display: flex;
+            justify-content: space-between;
+            margin-left: 150px;
+            margin-right: 150px;
+        }
+
+        .card__body {
+            padding: 24px;
+            background: #f5f5f5;
+            text-align: left;
+        }
+
+        .card__body .title {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .card__body .desc {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #5b5b5b;
+            font-weight: 300;
+            margin-bottom: 20px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            word-break: keep-all;
+        }
+
+        .section-buttons {
+            display: flex;
+            justify-content: space-between;
+            /* 각 버튼을 좌우로 공간을 두고 배치합니다. */
+            align-items: center;
+            /* 버튼을 세로로 가운데로 정렬합니다. */
+        }
+
+        .btn-outline-light {
+            margin-right: auto;
+            /* 홈전체 버튼을 왼쪽으로 배치합니다. */
+            cursor: pointer;
+            /* 마우스 커서를 손가락 모양으로 변경합니다. */
+        }
+
+        .btn-success {
+            margin-left: auto;
+            /* 글쓰기 버튼을 오른쪽으로 배치합니다. */
+            color: #FFFFFF;
+            /* 텍스트 색상을 지정합니다. */
+            background-color: #808080;
+            /* 배경색을 어두운 회색으로 설정합니다. */
+            border: 1px solid #808080;
+            /* 테두리 스타일을 지정합니다. */
+            cursor: pointer;
+            /* 마우스 커서를 손가락 모양으로 변경합니다. */
+        }
+
+
+        form {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+            /* 오른쪽 여백 추가 */
+            /* 검색 입력 필드를 수직으로 가운데로 정렬합니다. */
+        }
+
+        input[type="text"] {
+            margin-right: 10px;
+            /* 검색 입력 필드와 검색 버튼 사이의 간격을 조정합니다. */
+        }
+
+        button[type="submit"] {
+            margin-left: 10px;
+            /* 검색 버튼을 검색 입력 필드와 분리합니다. */
+        }
+
+        .card {
+            cursor: pointer;
+            /* 마우스 커서를 손가락 모양으로 변경하여 클릭 가능함을 나타냅니다. */
+            border: 1px solid #ccc;
+            /* 테두리 스타일 및 색상 지정 */
+            border-radius: 5px;
+            /* 테두리의 모서리를 둥글게 만듭니다. */
+            overflow: hidden;
+            /* 내용이 테두리를 넘어가지 않도록 합니다. */
+            margin-bottom: 20px;
+            /* 카드 사이의 간격을 조정합니다. */
+            /* 다른 스타일을 필요에 따라 추가할 수 있습니다. */
+            padding: 10px;
+        }
+
+        .search-label {
+            margin-right: 20px;
+            /* 검색어 입력란과 버튼 사이의 간격 조절 */
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var homeButton = document.querySelector('.btn-outline-light');
+            homeButton.addEventListener('click', function () {
+                // 메인 페이지 URL로 이동
+                window.location.href = '메인 페이지 URL';
+            });
+        });
+    </script>
+
+    <script>
+        // JavaScript를 사용하여 클릭 이벤트를 처리합니다.
+        // article 요소의 class가 card인 요소를 찾아서 클릭 이벤트를 추가합니다.
+        var cards = document.querySelectorAll('.card');
+
+        cards.forEach(function (card) {
+            card.addEventListener('click', function () {
+                // 카드를 클릭할 때 수행할 동작을 여기에 작성합니다.
+                // 이 예시에서는 카드가 클릭되었을 때 콘솔에 메시지를 출력하도록 합니다.
+                console.log('카드가 클릭되었습니다.');
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var writeButton = document.querySelector('.btn-success');
+            writeButton.addEventListener('click', function () {
+                // 팝업 창을 여는 코드 작성
+                alert('글쓰기 팝업을 여는 코드를 작성하세요.');
+                // 예시로 간단한 경고 창을 열어보았습니다. 실제로는 팝업 창의 디자인과 동작을 정의해야 합니다.
+            });
+        });
+    </script>
+
+
+
+</head>
+
+<body>
+
+    <header>
+        <h1>MEME</h1>
+    </header>
+
+
+
+    <main>
+        <section>
+            <div class="section-buttons">
+
+                <button type="button" class="btn btn-outline-light me-2">전체보기</button>
+
+                <form action="검색 결과 페이지 URL" method="GET">
+                    <label for="search_query">찾아보기</label>
+                    <input type="text" id="search" name="q" placeholder="검색어를 입력하세요" required>
+                    <button type="submit" style="border: none; background: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="none" d="M0 0h24v24H0z" />
+                            <path fill="#000000"
+                                d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                        </svg>
+                    </button>
+                </form>
+
+                <button type="button" class="btn btn-success">글쓰기</button>
+
+
+
+            </div>
+
+        </section>
+
+        <section>
+            <div class="card__inner container">
+                <article class="card">
+                    <figure class="card__header">
+                        <img class="img" src="https://cdn.imweb.me/upload/S202002173b45b771075df/7e4c5fc68b41b.jpg"
+                            alt="이미지1">
+                    </figure>
+                    <div class="card__body">
+                        <h3 class="title">슬픈 개구리 짤</h3>
+                        <p class="desc">이 캐릭터의 이름은 페페 더 프로그이다</p>
+                        <a class="btn" href="#">
+                            더 자세히 보기
+                            <svg width="52" height="8" viewBox="0 0 52 8" fill="none"
+                                xmlns="https://namu.wiki/w/%ED%8E%98%ED%8E%98%20%EB%8D%94%20%ED%94%84%EB%A1%9C%EA%B7%B8">
+
+                            </svg>
+                        </a>
+                    </div>
+                </article>
+                <article class="card">
+                    <figure class="card__header">
+                        <img class="img" src="https://webstoryboy.github.io/web2022/webs_img/card_bg02.jpg" alt="이미지2">
+                    </figure>
+                    <div class="card__body">
+                        <h3 class="title">밈밈밈</h3>
+                        <p class="desc">밈내용..</p>
+                        <a class="btn" href="#">
+                            더 자세히 보기
+                            <svg width="52" height="8" viewBox="0 0 52 8" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+
+                            </svg>
+                        </a>
+                    </div>
+                </article>
+                <article class="card">
+                    <figure class="card__header">
+                        <img class="img" src="https://webstoryboy.github.io/web2022/webs_img/card_bg03.jpg" alt="이미지3">
+                    </figure>
+                    <div class="card__body">
+                        <h3 class="title">밈밈밈.</h3>
+                        <p class="desc">밈내용..</p>
+                        <a class="btn" href="#">
+                            더 자세히 보기
+                            <svg width="52" height="8" viewBox="0 0 52 8" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+
+                            </svg>
+                        </a>
+                    </div>
+
+                </article>
+            </div>
+        </section>
+
+    </main>
+
+
+    <footer>
+        <div class="footer-bottom">
+            <p class="footer-desc">
+                &copy; Team : Hot Six Mini-project
+            </p>
+        </div>
+        </div>
+    </footer>
+
+
+
+</body>
+
+</html>
