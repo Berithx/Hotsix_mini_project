@@ -39,18 +39,18 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let sourceTypeTemp = "image";
+    let isImageTemp = true;
 
     $('#video').hide();
 
     $("#imgbtn").click(async function () {
-        sourceTypeTemp = "image";
+        isImageTemp = true;
         $('#image').show();
         $('#video').hide();
     })
 
     $("#vdobtn").click(async function () {
-        sourceTypeTemp = "video";
+        isImageTemp = false;
         $('#image').hide();
         $('#video').show();
     })
@@ -59,9 +59,9 @@
         const snapshot = await getCountFromServer(collection(db, "memes"));
         let id = snapshot.data().count;
 
-        let sourceType = sourceTypeTemp;
+        let isImage = isImageTemp;
         let source;
-        if (sourceType == "image") {
+        if (isImage) {
             source = $('#image').val();
         } else {
             source = $('#video').val();
@@ -71,7 +71,7 @@
         let content = $('#content').val();
         let doc = {
             'id': id,
-            'sourceType': sourceType,
+            'isImage': isImage,
             'source': source,
             'title': title,
             'year': year,
