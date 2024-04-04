@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meme's</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
@@ -36,23 +40,12 @@
 
         .sub_body_btn {
             width: 70%;
-            margin: 20px auto 20px auto;
+            margin: 20px auto 10px auto;
         }
 
-        .mytitle>button {
-            width: 150px;
-            height: 50px;
-            background-color: transparent;
-            color: white;
-            border: 1px solid white;
-            border-radius: 5px;
-
-            margin-top: 50px;
-        }
-
-        .memecards {
+        .card-group {
             width: 75%;
-            margin: 100px auto 0px auto;
+            margin: 80px auto 0px auto;
 
             display: flex;
             flex-direction: row;
@@ -60,26 +53,57 @@
             justify-content: center;
         }
 
-        .mypostingbox {
-            width: 500px;
-
-            margin: 30px auto 0px auto;
-            padding: 20px;
-            box-shadow: 0px 0px 3px 0px blue;
-            border-radius: 5px;
+        .card-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
         }
 
-        .mybtn {
+        .card-group .card {
+            flex: 1 0 300px;
+            cursor: pointer;
+        }
+
+        .card-group .card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-fade {
             display: flex;
-            flex-direction: row;
             align-items: center;
             justify-content: center;
         }
 
-        .mybtn>button {
-            margin-right: 5px;
+        .modal-dialog {
+            margin: 0 auto;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-footer .btn {
+            width: 120px;
+            height: 40px;
+            font-size: 18px;
+        }
+
+        #memeDate {
+            text-align: right;
+        }
+
+        #memeDescription {
+            height: 100px;
+            overflow: auto;
+        }
+
+        .footer-btns {
+            margin: 0px auto 0px auto;
         }
     </style>
+
     <script type="module">
         // Firebase SDK 라이브러리 가져오기
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -103,60 +127,151 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        $("#postingbtn").click(async function () {
-            let image = $('#image').val();
-            let title = $('#title').val();
-            let content = $('#content').val();
-            let date = $('#date').val();
+        let isImageTemp = true;
 
+        $('#video').hide();
+
+        $("#imgbtn").click(async function () {
+            isImageTemp = true;
+            $('#image').show();
+            $('#video').hide();
+        })
+
+        $("#vdobtn").click(async function () {
+            isImageTemp = false;
+            $('#image').hide();
+            $('#video').show();
+        })
+
+        $("#writebtn").click(async function () {
+            const snapshot = await getCountFromServer(collection(db, "memes"));
+            let id = snapshot.data().count;
+
+            let isImage = isImageTemp;
+            let source;
+            if (isImage) {
+                source = $('#image').val();
+            } else {
+                source = $('#video').val();
+            }
+            let title = $('#title').val();
+            let year = $('#year').val();
+            let content = $('#content').val();
             let doc = {
-                'image': image,
+                'id': id,
+                'isImage': isImage,
+                'source': source,
                 'title': title,
-                'content': content,
-                'date': date,
+                'year': year,
+                'content': content
             };
-            await addDoc(collection(db, "albums"), doc);
-            alert('저장 완료!');
+
+            await addDoc(collection(db, "memes"), doc);
             window.location.reload();
         })
 
-
-        $("#writebtn").click(async function () {
-            $('#postingbox').toggle();
-        })
-
-
-        let url = "http://spartacodingclub.shop/sparta_api/seoulair";
-        fetch(url).then(res => res.json()).then(data => {
-            let mise = data['RealtimeCityAir']['row']['0']['IDEX_NM']
-            $('#msg').text(mise)
-        })
-
-
-        let docs = await getDocs(collection(db, "albums"));
+        let docs = await getDocs(collection(db, "memes"));
         docs.forEach((doc) => {
             let row = doc.data();
 
-            let image = row['image'];
+            let cardId = row['id'];
+            let source = row['source'];
             let title = row['title'];
             let content = row['content'];
-            let date = row['date'];
+            let year = row['year'];
 
             let temp_html = `
             <div class="col">
                 <div class="card h-100">
-                    <img src="${image}"
+                    <img src="${source}"
                         class="card-img-top" alt="...">
                     <div class="card-body">
                         <h5 class="card-title">${title}</h5>
                         <p class="card-text">${content}</p>
                     </div>
                     <div class="card-footer">
-                        <small class="text-body-secondary">${date}</small>
+                        <small>${year}년도</small>
                     </div>
                 </div>
             </div>`;
             $('#card').append(temp_html);
+        });
+
+        // post용 modal 선언
+        const postModal = new bootstrap.Modal(document.getElementById('postmodal'));
+
+        // 유튜브 동영상 id만 추출하기
+        // https://www.youtube.com/watch?v=${id} 형식만 추출됨
+                        // 글 등록할 때 유효한 동영상 주소인지 검사하면 좋을 듯합니다.
+                        function getYouTubeVideoId(url) {
+            const regex = /[?&]v=([^&#]+)/;
+                        const match = url.match(regex);
+                        return match ? match[1] : null;
+        }
+
+                        function openPostModal(row) {
+            //console.log(row['id']);
+            //console.log(row['sourceType']);
+            //console.log(row['source']);
+            //console.log(row['title']);
+            //console.log(row['year']);
+            //console.log(row['content']);
+
+            const mediaContainer = document.getElementById('mediaContainer');
+                        mediaContainer.innerHTML = '';
+
+                        const isImage = row['sourceType'] == "image"; //db에 isImage 값 추가되면 교체하기
+                        if (isImage) {
+                // 이미지 표시
+                const image = document.createElement('img');
+                        image.src = row['source'];
+                        image.classList.add('img-fluid');
+                        mediaContainer.appendChild(image);
+            }
+                        else {
+                // 유튜브 비디오 재생
+                const videoId = getYouTubeVideoId(row['source']);
+                        const iframe = document.createElement('iframe');
+                        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                        iframe.allowFullscreen = false;
+                        iframe.width = '100%';
+                        iframe.height = '300px';
+                        mediaContainer.appendChild(iframe);
+            }
+
+                        const memeTitle = document.getElementById('memeTitle');
+                        const memeDate = document.getElementById('memeDate');
+                        const memeDescription = document.getElementById('memeDescription');
+
+                        memeTitle.textContent = row['title'];
+                        memeDate.textContent = row['year']; //+ row['month']
+                        memeDescription.textContent = row['content'];
+
+                        postModal.show();
+        }
+
+        // class가 card인 것을 찾은 뒤 click 이벤트 등록
+        document.querySelectorAll('.card').forEach(card => {
+                            card.addEventListener('click', async function () {
+                                const cardId = this.getAttribute('data-id');
+
+                                let docs = await getDocs(collection(db, "memes"));
+
+                                docs.forEach((doc) => {
+                                    let row = doc.data();
+
+                                    //console.log(row['id']);
+                                    //console.log(row['sourceType']);
+                                    //console.log(row['source']);
+                                    //console.log(row['title']);
+                                    //console.log(row['year']);
+                                    //console.log(row['content']);
+
+                                    if (row['id'] == cardId) {
+                                        openPostModal(row);
+                                    }
+                                })
+                            });
         });
     </script>
 </head>
@@ -181,35 +296,133 @@
                 <button class="btn btn-outline-secondary" type="submit">Search</button>
         </div>
     </div>
+
     <div class="sub_body_btn">
-        <button id="writebtn" type="button" class="btn btn-secondary" style="float: right;">글 쓰기</button>
+        <button type="button" class="btn btn-secondary" style="float: right;" data-bs-toggle="modal"
+            data-bs-target="#writemodal">글 쓰기</button>
     </div>
-    <div class="mypostingbox" id="postingbox" style="clear: right;">
-        <div class="form-floating mb-3">
-            <input type="email" class="form-control" id="image" placeholder="앨범 이미지">
-            <label for="floatingInput">앨범 이미지</label>
-        </div>
-        <div class="form-floating mb-3">
-            <input type="email" class="form-control" id="title" placeholder="앨범 제목">
-            <label for="floatingInput">앨범 제목</label>
-        </div>
-        <div class="form-floating mb-3">
-            <input type="email" class="form-control" id="content" placeholder="앨범 내용">
-            <label for="floatingInput">앨범 내용</label>
-        </div>
-        <div class="form-floating mb-3">
-            <input type="email" class="form-control" id="date" placeholder="앨범 날짜">
-            <label for="floatingInput">앨범 날짜</label>
-        </div>
-        <div class="mybtn">
-            <button id="postingbtn" type="button" class="btn btn-primary">기록하기</button>
-            <button type="button" class="btn btn-outline-primary">닫기</button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="writemodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="mypostingbox" id="postingbox">
+                        <div class="form-floating mb-3">
+                            <button type="button" class="btn btn-outline-secondary" id="imgbtn">이미지</button>
+                            <button type="button" class="btn btn-outline-secondary" id="vdobtn">동영상</button>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="image" placeholder="이미지 주소">
+                            <label for="floatingInput">이미지 주소</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="video" placeholder="동영상 주소">
+                            <label for="floatingInput">동영상 주소</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="title" placeholder="밈 이름">
+                            <label for="floatingInput">밈 이름</label>
+                        </div>
+                        <div class="input-group mb-3">
+                            <label class="input-group-text" for="inputGroupSelect01">유행 년도</label>
+                            <select class="form-select" id="year">
+                                <option selected>년도 선택</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                                <option value="2022">2022</option>
+                                <option value="2021">2021</option>
+                                <option value="2020">2020</option>
+                                <option value="2019">2019</option>
+                                <option value="2018">2018</option>
+                                <option value="2017">2017</option>
+                                <option value="2016">2016</option>
+                                <option value="2015">2015</option>
+                                <option value="2014">2014</option>
+                                <option value="2013">2013</option>
+                                <option value="2012">2012</option>
+                                <option value="2010">2010</option>
+                                <option value="2009">2009</option>
+                                <option value="2008">2008</option>
+                                <option value="2007">2007</option>
+                                <option value="2006">2006</option>
+                                <option value="2005">2005</option>
+                                <option value="2004">2004</option>
+                                <option value="2003">2003</option>
+                                <option value="2002">2002</option>
+                                <option value="2001">2001</option>
+                                <option value="2000">2000</option>
+                            </select>
+                        </div>
+                        <p>내용</p>
+                        <div class="form-floating">
+                            <textarea class="form-control" placeholder="내용" id="content"
+                                style="height: 100px"></textarea>
+                            <label for="floatingTextarea2">(500자 이하)</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="footer-btns">
+                        <button type="button" class="btn btn-primary" id="writebtn">업로드</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="memecards">
+
+    <div class="card-group">
         <div id="card" class="row row-cols-1 row-cols-md-3 g-4">
         </div>
     </div>
+    </div>
+
+    <div class="card-group">
+        <!-- 테스트용 카드, 카드 만들때 data-id 필요 -->
+        <div class="card" data-id="0">
+            <div class="card-body">
+                <h5 class="card-title">Card 1</h5>
+                <p class="card-text">Click to open popup.</p>
+            </div>
+        </div>
+        <div class="card" data-id="1">
+            <div class="card-body">
+                <h5 class="card-title">Card 1</h5>
+                <p class="card-text">Click to open popup.</p>
+            </div>
+        </div>
+        <div class="card" data-id="2">
+            <div class="card-body">
+                <h5 class="card-title">Card 1</h5>
+                <p class="card-text">Click to open popup.</p>
+            </div>
+        </div>
+        <div class="card" data-id="3">
+            <div class="card-body">
+                <h5 class="card-title">Card 2</h5>
+                <p class="card-text">Click to open popup.</p>
+            </div>
+        </div>
+
+
+        <!-- Modal -->
+        <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <div id="mediaContainer"></div>
+                        <h2 id="memeTitle"></h2>
+                        <p id="memeDate"></p>
+                        <p id="memeDescription"></p>
+                    </div>
+
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">닫기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 
