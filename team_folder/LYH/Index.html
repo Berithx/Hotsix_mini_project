@@ -170,33 +170,6 @@
             window.location.reload();
         })
 
-        let docs = await getDocs(collection(db, "memes"));
-        docs.forEach((doc) => {
-            let row = doc.data();
-
-            let cardId = row['id'];
-            let source = row['source'];
-            let title = row['title'];
-            let content = row['content'];
-            let year = row['year'];
-
-            let temp_html = `
-            <div class="col">
-                <div class="card h-100">
-                    <img src="${source}"
-                        class="card-img-top" alt="...">
-                    <div class="card-body">
-                        <h5 class="card-title">${title}</h5>
-                        <p class="card-text">${content}</p>
-                    </div>
-                    <div class="card-footer">
-                        <small>${year}년도</small>
-                    </div>
-                </div>
-            </div>`;
-            $('#card').append(temp_html);
-        });
-
         // post용 modal 선언
         const postModal = new bootstrap.Modal(document.getElementById('postmodal'));
 
@@ -273,6 +246,34 @@
                                 })
                             });
         });
+
+        let docs = await getDocs(collection(db, "memes"));
+        docs.forEach((doc) => {
+            let row = doc.data();
+
+            let cardId = row['id'];
+            let source = row['source'];
+            let title = row['title'];
+            let content = row['content'];
+            let year = row['year'];
+
+            let temp_html = `
+            <div class="col">
+                <div class="card" style="height: 100%;" data-id="${cardId}">
+                    <img src="${source}"
+                        class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">${title}</h5>
+                        <p class="card-text">${content}</p>
+                    </div>
+                    <div class="card-footer">
+                        <small style="text-align: right;">${year}년도</small>
+                    </div>
+                </div>
+            </div>`;
+            $('#card').append(temp_html);
+        });
+
     </script>
 </head>
 
@@ -380,9 +381,15 @@
 
     <div class="card-group">
         <!-- 테스트용 카드, 카드 만들때 data-id 필요 -->
-        <div class="card" data-id="0">
+        <div class="card" data-id="3">
             <div class="card-body">
-                <h5 class="card-title">Card 1</h5>
+                <h5 class="card-title">Card 3</h5>
+                <p class="card-text">Click to open popup.</p>
+            </div>
+        </div>
+        <div class="card" data-id="2">
+            <div class="card-body">
+                <h5 class="card-title">Card 2</h5>
                 <p class="card-text">Click to open popup.</p>
             </div>
         </div>
@@ -392,15 +399,9 @@
                 <p class="card-text">Click to open popup.</p>
             </div>
         </div>
-        <div class="card" data-id="2">
+        <div class="card" data-id="0">
             <div class="card-body">
-                <h5 class="card-title">Card 1</h5>
-                <p class="card-text">Click to open popup.</p>
-            </div>
-        </div>
-        <div class="card" data-id="3">
-            <div class="card-body">
-                <h5 class="card-title">Card 2</h5>
+                <h5 class="card-title">Card 0</h5>
                 <p class="card-text">Click to open popup.</p>
             </div>
         </div>
