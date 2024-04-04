@@ -229,7 +229,7 @@
                                 const cardId = this.getAttribute('data-id');
 
                                 let docs = await getDocs(collection(db, "memes"));
-
+                                
                                 docs.forEach((doc) => {
                                     let row = doc.data();
 
@@ -247,6 +247,7 @@
                             });
         });
 
+        // DB 자료 상 id를 기준으로 카드 생성
         let docs = await getDocs(collection(db, "memes"));
         docs.forEach((doc) => {
             let row = doc.data();
@@ -266,12 +267,12 @@
                         <h5 class="card-title">${title}</h5>
                         <p class="card-text">${content}</p>
                     </div>
-                    <div class="card-footer">
-                        <small style="text-align: right;">${year}년도</small>
+                    <div class="card-footer" style="text-align: right";>
+                        <small>${year}년도</small>
                     </div>
                 </div>
             </div>`;
-            $('#card').append(temp_html);
+            $('#cards').append(temp_html);
         });
 
     </script>
@@ -374,7 +375,7 @@
     </div>
 
     <div class="card-group">
-        <div id="card" class="row row-cols-1 row-cols-md-3 g-4">
+        <div id="cards" class="row row-cols-1 row-cols-md-3 g-4">
         </div>
     </div>
     </div>
