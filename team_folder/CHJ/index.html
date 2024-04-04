@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meme</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cute+Font&family=Dokdo&display=swap');
+
+        * {
+            font-family: "Gowun Dodum", sans-serif;
+        }
+
+        .main {
+            color: white;
+
+            background-image: url('https://mblogthumb-phinf.pstatic.net/MjAyMTA2MjNfMTc0/MDAxNjI0NDE5MDQ1OTc0.gxa8FtO1cEqKFL-d86tRkjcpkzQoQKHf8iHfdaMo-ykg.jxiLURgmkR7kAjFg13sk-5ye73TTtMngr88mhv5_lRwg.JPEG.sglucia_/%ED%8E%98%ED%8E%98%EA%B0%9C%EA%B5%AC%EB%A6%AC14.jpg?type=w800');
+            background-position: center;
+            background-size: cover;
+        }
+
+        body {
+            background-color: black;
+        }
+
+        .mycards {
+            width: 1200px;
+            margin: 20px auto 20px auto;
+        }
+
+        .mypostingbox {
+            width: 500px;
+            margin: 20px auto 20px auto;
+
+            border: 1px solid white;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .form-floating>input {
+            background-color: transparent;
+            color: white;
+        }
+
+        .form-floating>label {
+            color: white;
+        }
+
+        .input-group>label {
+            background-color: transparent;
+            color: white;
+        }
+
+        .mypostingbox>button {
+            width: 100%;
+        }
+    </style>
+    <script type="module">
+        // Firebase SDK 라이브러리 가져오기
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { collection, addDoc, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+        };
+
+
+        // Firebase 인스턴스 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+
+        // 엔터 키로 검색
+        $('#query').on('keypress', function (e) {
+            if (e.which === 13) { 
+                e.preventDefault(); 
+
+                (async function () {
+                    let queryText = $('#query').val();
+                    const q = query(collection(db, "meme"), where("title", ">=", queryText), where("title", "<=", queryText + "\uf8ff"));
+
+                    try {
+                        let docs = await getDocs(q);
+
+                        if (docs.empty) {
+                            alert("검색결과가 없습니다.");
+                        } else {
+                            docs.forEach((doc) => {
+                                console.log(doc.id, " => ", doc.data());
+                                let row = doc.data();
+                                let image = row['image'];
+                                let title = row['title'];
+                                let star = row['star'];
+                                let comment = row['comment'];
+
+                                let temp_html = `
+                                <div class="col">
+                                    <div class="card h-100">
+                                        <img src="${image}"
+                                            class="card-img-top" alt="${title}">
+                                        <div class="card-body">
+                                            <h5 class="card-title">${title}</h5>
+                                            <p class="card-text">${star}</p>
+                                            <p class="card-text">${comment}</p>
+                                        </div>
+                                    </div>
+                                </div>`;
+
+                                $('#card').empty();
+                                $('#card').append(temp_html);
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error", error);
+                    }
+                })();
+            }
+        });
+
+        // 버튼 클릭으로 검색
+        $("#search").click(async function () {
+            let queryText = $('#query').val();
+            const q = query(collection(db, "meme"), where("title", ">=", queryText), where("title", "<=", queryText + "\uf8ff"));
+
+            try {
+                let docs = await getDocs(q);
+
+                if (docs.empty) {
+                    alert("검색결과가 없습니다.");
+                } else {
+                    docs.forEach((doc) => {
+                        console.log(doc.id, " => ", doc.data());
+                        let row = doc.data();
+                        let image = row['image'];
+                        let title = row['title'];
+                        let star = row['star'];
+                        let comment = row['comment'];
+
+                        let temp_html = `
+                                <div class="col">
+                                    <div class="card h-100">
+                                        <img src="${image}"
+                                            class="card-img-top" alt="${title}">
+                                        <div class="card-body">
+                                            <h5 class="card-title">${title}</h5>
+                                            <p class="card-text">${star}</p>
+                                            <p class="card-text">${comment}</p>
+                                        </div>
+                                    </div>
+                                </div>`;
+
+                        $('#card').empty();
+                        $('#card').append(temp_html);
+                    });
+                }
+            } catch (error) {
+                console.error("Error", error);
+            }
+        })
+
+
+        $("#postingbtn").click(async function () {
+            let image = $('#image').val();
+            let title = $('#title').val();
+            let star = $('#star').val();
+            let comment = $('#comment').val();
+
+            let doc = {
+                'image': image,
+                'title': title,
+                'star': star,
+                'comment': comment
+            };
+            await addDoc(collection(db, "meme"), doc);
+            alert('저장 완료!');
+            window.location.reload();
+        })
+
+        $("#savebtn").click(async function () {
+            $('#postingbox').toggle();
+        })
+
+        let url = "http://spartacodingclub.shop/sparta_api/weather/seoul";
+        fetch(url).then(res => res.json()).then(data => {
+            let temp = data['temp'];
+
+            if (temp > 20) {
+                $('#temperature').text('더워요');
+            } else if (temp < 20) {
+                $('#temperature').text('추워요');
+            }
+        })
+
+        let docs = await getDocs(collection(db, "meme"));
+        docs.forEach((doc) => {
+            let row = doc.data();
+            let image = row['image'];
+            let title = row['title'];
+            let star = row['star'];
+            let comment = row['comment'];
+
+            let temp_html = `
+            <div class="col">
+                <div class="card h-100">
+                    <img src="${image}"
+                        class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">${title}</h5>
+                        <p class="card-text">${star}</p>
+                        <p class="card-text">${comment}</p>
+                    </div>
+                </div>
+            </div>`;
+
+            $('#card').append(temp_html);
+        });
+    </script>
+</head>
+
+<body>
+    <header class="p-3 text-bg-dark">
+        <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+                    <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap">
+                        <use xlink:href="#bootstrap"></use>
+                    </svg>
+                </a>
+
+                <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                    <li><a href="#" class="nav-link px-2 text-danger">Meme</a></li>
+                    <li><a href="#" class="nav-link px-2 text-white">현재기온: <span id="temperature"></span></a></li>
+                </ul>
+
+                <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search">
+                    <input type="search" class="form-control form-control-dark text-bg-dark" id="query"
+                        placeholder="Search..." aria-label="Search">
+                </form>
+
+                <div class="text-end">
+                    <button type="button" class="btn btn-outline-light me-2" id="search">검색</button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="main">
+        <div class="p-5 mb-4 bg-body-tertiary rounded-3">
+            <div class="container-fluid py-5">
+                <h1 class="display-5 fw-bold">Meme</h1>
+                <p class="col-md-8 fs-4">다양한 밈을 모아 놓은 저장소</p>
+                <button id="savebtn" type="button" class="btn btn-outline-light">영화 기록하기</button>
+                <button type="button" class="btn btn-outline-light">상세정보</button>
+            </div>
+        </div>
+    </div>
+    <div id="postingbox" class="mypostingbox">
+        <div class="form-floating mb-3">
+            <input type="email" class="form-control" id="image" placeholder="밈 이미지 주소">
+            <label for="floatingInput">밈 이미지 주소</label>
+        </div>
+        <div class="form-floating mb-3">
+            <input type="email" class="form-control" id="title" placeholder="밈 제목">
+            <label for="floatingInput">밈 제목</label>
+        </div>
+        <div class="input-group mb-3">
+            <label class="input-group-text" for="inputGroupSelect01">별점</label>
+            <select id="star" class="form-select" id="inputGroupSelect01">
+                <option selected>별점선택</option>
+                <option value="⭐">⭐</option>
+                <option value="⭐⭐">⭐⭐</option>
+                <option value="⭐⭐⭐">⭐⭐⭐</option>
+                <option value="⭐⭐⭐⭐">⭐⭐⭐⭐</option>
+                <option value="⭐⭐⭐⭐⭐">⭐⭐⭐⭐⭐</option>
+            </select>
+        </div>
+        <div class="form-floating mb-3">
+            <input type="email" class="form-control" id="comment" placeholder="밈 내용">
+            <label for="floatingInput">밈 내용</label>
+        </div>
+        <button id="postingbtn" type="button" class="btn btn-danger">기록하기</button>
+    </div>
+    <div class="mycards">
+        <div id="card" class="row row-cols-1 row-cols-md-4 g-4"> </div>
+    </div>
+</body>
+
+</html>
