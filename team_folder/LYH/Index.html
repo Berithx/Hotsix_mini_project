@@ -90,6 +90,40 @@
             font-size: 18px;
         }
 
+        /* 모달 이미지 추가 */
+        .modal-image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            /* 16:9 비율 */
+            overflow: hidden;
+        }
+
+        .modal-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 모달 비디오 추가 */
+        .modal-video-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            /* 16:9 비율 */
+        }
+
+        .modal-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
         #memeDate {
             text-align: right;
         }
@@ -127,7 +161,109 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // 엔터 키로 검색
+        $('#query form-control me-2').on('keypress', function (e) {
+            if (e.which === 13) {
+                e.preventDefault();
+
+                (async function () {
+                    let queryText = $('#qquery form-control me-2').val();
+                    const q = query(collection(db, "meme"), where("title", ">=", queryText), where("title", "<=", queryText + "\uf8ff"));
+
+                    try {
+                        let docs = await getDocs(q);
+
+                        if (docs.empty) {
+                            alert("검색결과가 없습니다.");
+                        } else {
+                            docs.forEach((doc) => {
+                                console.log(doc.id, " => ", doc.data());
+                                let row = doc.data();
+                                let cardId = row['id'];
+                                let source = row['source'];
+                                let title = row['title'];
+                                let content = row['content'];
+                                let year = row['year'];
+
+                                let temp_html = `
+                                <div class="col">
+                                    <div class="card" data-id="${cardId}" style="height: 100%;">
+                                        <img src="${source}"
+                                            class="card-img-top" alt="...">
+                                        <div class="card-body">
+                                            <h5 class="card-title">${title}</h5>
+                                            <p class="card-text">${content}</p>
+                                        </div>
+                                        <div class="card-footer" style="text-align: right";>
+                                            <small>${year}년도</small>
+                                        </div>
+                                    </div>
+                                </div>`;
+
+                                $('#card').empty();
+                                $('#card').append(temp_html);
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error", error);
+                    }
+                })();
+            }
+        });
+
+        // 버튼 클릭으로 검색
+        $("#btn btn-outline-secondary").click(async function () {
+            let queryText = $('#query form-control me-2').val();
+            const q = query(collection(db, "meme"), where("title", ">=", queryText), where("title", "<=", queryText + "\uf8ff"));
+
+            try {
+                let docs = await getDocs(q);
+
+                if (docs.empty) {
+                    alert("검색결과가 없습니다.");
+                } else {
+                    docs.forEach((doc) => {
+                        console.log(doc.id, " => ", doc.data());
+                        let row = doc.data();
+                        let image = row['image'];
+                        let title = row['title'];
+                        let star = row['star'];
+                        let comment = row['comment'];
+
+                        let temp_html = `
+                                <div class="col">
+                                    <div class="card h-100">
+                                        <img src="${image}"
+                                            class="card-img-top" alt="${title}">
+                                        <div class="card-body">
+                                            <h5 class="card-title">${title}</h5>
+                                            <p class="card-text">${star}</p>
+                                            <p class="card-text">${comment}</p>
+                                        </div>
+                                    </div>
+                                </div>`;
+
+                        $('#card').empty();
+                        $('#card').append(temp_html);
+                    });
+                }
+            } catch (error) {
+                console.error("Error", error);
+            }
+        })
+
+        // 글쓰기 모달
         let isImageTemp = true;
+
+        function guid() {
+            function s4() {
+                return Math.floor((1 + Math.random()) * 0x10000)
+                    .toString(16)
+                    .substring(1);
+            }
+            return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+                s4() + '-' + s4() + s4() + s4();
+        }
 
         $('#video').hide();
 
@@ -144,9 +280,7 @@
         })
 
         $("#writebtn").click(async function () {
-            const snapshot = await getCountFromServer(collection(db, "memes"));
-            let id = snapshot.data().count;
-
+            let id = guid();
             let isImage = isImageTemp;
             let source;
             if (isImage) {
@@ -157,94 +291,140 @@
             let title = $('#title').val();
             let year = $('#year').val();
             let content = $('#content').val();
-            let doc = {
+            let data = {
                 'id': id,
                 'isImage': isImage,
                 'source': source,
                 'title': title,
                 'year': year,
-                'content': content
+                'content': content,
+                'timestamp': new Date()
             };
 
-            await addDoc(collection(db, "memes"), doc);
+            await setDoc(doc(db, "memes", String(id)), data);
             window.location.reload();
         })
+
 
         // post용 modal 선언
         const postModal = new bootstrap.Modal(document.getElementById('postmodal'));
 
         // 유튜브 동영상 id만 추출하기
         // https://www.youtube.com/watch?v=${id} 형식만 추출됨
-                        // 글 등록할 때 유효한 동영상 주소인지 검사하면 좋을 듯합니다.
-                        function getYouTubeVideoId(url) {
+        // 글 등록할 때 유효한 동영상 주소인지 검사하면 좋을 듯합니다.
+        function getYouTubeVideoId(url) {
             const regex = /[?&]v=([^&#]+)/;
-                        const match = url.match(regex);
-                        return match ? match[1] : null;
+            const match = url.match(regex);
+            return match ? match[1] : null;
         }
 
-                        function openPostModal(row) {
+        // 텍스트 내에 존재하는 링크를 하이퍼링크로 변환
+        function convertLinks(text) {
+            // URL 패턴 정규식
+            const urlPattern = /(https?:\/\/[^\s]+)/g;
+
+            // 링크를 하이퍼링크로 변환
+            const convertedText = text.replace(urlPattern, function (url) {
+                if (url.includes('">')) {
+                    // 이미 <a> 태그로 감싸진 URL인 경우 원본 URL 반환
+                    return url;
+                } else {
+                    // <a> 태그로 감싸지 않은 URL인 경우 하이퍼링크로 변환
+                    return '<a href="' + url + '" target="_blank">' + url + '</a>';
+                }
+            });
+
+            return convertedText;
+        }
+
+        // mediaContainer 안에 imageContainer를 붙이는 함수
+        // 무조건 성공시키는데 예외가 추가되면 실패 시 false 반환 기능 추가
+        function makeImageContainer(mediaContainer, row) {
+            // 이미지 표시
+            const imageContainer = document.createElement('div');
+            imageContainer.classList.add('modal-image-container');
+            const image = document.createElement('img');
+            image.src = row['source'];
+            image.classList.add('img-fluid', 'modal-image');
+
+            imageContainer.appendChild(image);
+            mediaContainer.appendChild(imageContainer);
+
+            return true;
+        }
+
+        // mediaContainer 안에 videoContainer를 붙이는 함수
+        // video id가 유효하지않으면 false 반환
+        function makeVideoContainer(mediaContainer, row) {
+            // 유튜브 비디오 재생
+            const videoContainer = document.createElement('div');
+            videoContainer.classList.add('modal-video-container');
+            const videoId = getYouTubeVideoId(row['source']);
+            if (videoId) // video id가 null로 반환 되었을 때 예외 처리
+            {
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1;`;
+                iframe.classList.add('modal-video');
+                iframe.setAttribute('frameborder', '0');
+                iframe.setAttribute('allowFullscreen', 'false');
+
+                videoContainer.appendChild(iframe);
+                mediaContainer.appendChild(videoContainer);
+
+                return true;
+            }
+            else {
+                console.log("유효한 영상 주소가 아닙니다.");
+                alert("유효한 영상 주소가 아닙니다.");
+
+                return false;
+            }
+        }
+
+        function openPostModal(row) {
             //console.log(row['id']);
-            //console.log(row['sourceType']);
+            //console.log(row['isImage']);
             //console.log(row['source']);
             //console.log(row['title']);
             //console.log(row['year']);
             //console.log(row['content']);
 
             const mediaContainer = document.getElementById('mediaContainer');
-                        mediaContainer.innerHTML = '';
+            mediaContainer.innerHTML = '';
 
-                        const isImage = row['sourceType'] == "image"; //db에 isImage 값 추가되면 교체하기
-                        if (isImage) {
-                // 이미지 표시
-                const image = document.createElement('img');
-                        image.src = row['source'];
-                        image.classList.add('img-fluid');
-                        mediaContainer.appendChild(image);
+            let isShowModal = false;
+            if (row['isImage']) {
+                isShowModal = makeImageContainer(mediaContainer, row);
             }
-                        else {
-                // 유튜브 비디오 재생
-                const videoId = getYouTubeVideoId(row['source']);
-                        const iframe = document.createElement('iframe');
-                        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-                        iframe.allowFullscreen = false;
-                        iframe.width = '100%';
-                        iframe.height = '300px';
-                        mediaContainer.appendChild(iframe);
+            else {
+                isShowModal = makeVideoContainer(mediaContainer, row);
             }
 
-                        const memeTitle = document.getElementById('memeTitle');
-                        const memeDate = document.getElementById('memeDate');
-                        const memeDescription = document.getElementById('memeDescription');
+            if (isShowModal) {
+                const memeTitle = document.getElementById('memeTitle');
+                const memeDate = document.getElementById('memeDate');
+                const memeDescription = document.getElementById('memeDescription');
 
-                        memeTitle.textContent = row['title'];
-                        memeDate.textContent = row['year']; //+ row['month']
-                        memeDescription.textContent = row['content'];
+                memeTitle.textContent = row['title'];
+                memeDate.textContent = row['year']; //+ row['month']
 
-                        postModal.show();
+                memeDescription.innerHTML = convertLinks(row['content']); // 하이퍼링크를 사용하는 경우 textContent 사용이 아닌 innerHTML 사용
+
+                postModal.show();
+            }
         }
 
-        // class가 card인 것을 찾은 뒤 click 이벤트 등록
-        document.querySelectorAll('.card').forEach(card => {
-                            card.addEventListener('click', async function () {
-                                const cardId = this.getAttribute('data-id');
-
-                                let docs = await getDocs(collection(db, "memes"));
-                                
-                                docs.forEach((doc) => {
-                                    let row = doc.data();
-
-                                    //console.log(row['id']);
-                                    //console.log(row['sourceType']);
-                                    //console.log(row['source']);
-                                    //console.log(row['title']);
-                                    //console.log(row['year']);
-                                    //console.log(row['content']);
-
-                                    if (row['id'] == cardId) {
-                                        openPostModal(row);
-                                    }
-                                })
-                            });
+        // postModal이 닫힐 때 기존 유튜브 영상 비우기
+        postModal._element.addEventListener('hidden.bs.modal', function () {
+            const videoContainer = document.querySelector('.modal-video-container');
+            if (videoContainer) {
+                const iframe = videoContainer.querySelector('iframe');
+                if (iframe) {
+                    const videoSrc = iframe.src;
+                    iframe.src = '';
+                    iframe.src = videoSrc;
+                }
+            }
         });
 
         // DB 자료 상 id를 기준으로 카드 생성
@@ -260,7 +440,7 @@
 
             let temp_html = `
             <div class="col">
-                <div class="card" style="height: 100%;" data-id="${cardId}">
+                <div class="card" data-id="${cardId}" style="height: 100%;">
                     <img src="${source}"
                         class="card-img-top" alt="...">
                     <div class="card-body">
@@ -273,8 +453,29 @@
                 </div>
             </div>`;
             $('#cards').append(temp_html);
-        });
 
+            const card = document.querySelector(`[data-id="${cardId}"]`);
+            card.addEventListener('click', async function () {
+                const clickedCardId = this.getAttribute('data-id');
+
+                let docs = await getDocs(collection(db, "memes"));
+
+                docs.forEach((doc) => {
+                    let row = doc.data();
+
+                    //console.log(row['id']);
+                    //console.log(row['sourceType']);
+                    //console.log(row['source']);
+                    //console.log(row['title']);
+                    //console.log(row['year']);
+                    //console.log(row['content']);
+
+                    if (row['id'] == clickedCardId) {
+                        openPostModal(row);
+                    }
+                })
+            })
+        });
     </script>
 </head>
 
@@ -294,8 +495,8 @@
 
         <div style="width: 30%;">
             <form class="d-flex" role="search">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-secondary" type="submit">Search</button>
+                    <input class="query form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-secondary" type="submit">Search</button>
         </div>
     </div>
 
@@ -304,9 +505,9 @@
             data-bs-target="#writemodal">글 쓰기</button>
     </div>
 
-    <!-- Modal -->
+    <!-- 글쓰기 Modal -->
     <div class="modal fade" id="writemodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body">
                     <div class="mypostingbox" id="postingbox">
@@ -354,11 +555,21 @@
                                 <option value="2002">2002</option>
                                 <option value="2001">2001</option>
                                 <option value="2000">2000</option>
+                                <option value="1999">1999</option>
+                                <option value="1998">1998</option>
+                                <option value="1997">1997</option>
+                                <option value="1996">1996</option>
+                                <option value="1995">1995</option>
+                                <option value="1994">1994</option>
+                                <option value="1993">1993</option>
+                                <option value="1992">1992</option>
+                                <option value="1991">1991</option>
+                                <option value="1990">1990</option>
                             </select>
                         </div>
                         <p>내용</p>
                         <div class="form-floating">
-                            <textarea class="form-control" placeholder="내용" id="content"
+                            <textarea class="form-control" maxlength='500' placeholder="내용" id="content"
                                 style="height: 100px"></textarea>
                             <label for="floatingTextarea2">(500자 이하)</label>
                         </div>
@@ -374,57 +585,30 @@
         </div>
     </div>
 
+    <!-- 카드 리스트 -->
     <div class="card-group">
         <div id="cards" class="row row-cols-1 row-cols-md-3 g-4">
         </div>
     </div>
     </div>
 
-    <div class="card-group">
-        <!-- 테스트용 카드, 카드 만들때 data-id 필요 -->
-        <div class="card" data-id="3">
-            <div class="card-body">
-                <h5 class="card-title">Card 3</h5>
-                <p class="card-text">Click to open popup.</p>
-            </div>
-        </div>
-        <div class="card" data-id="2">
-            <div class="card-body">
-                <h5 class="card-title">Card 2</h5>
-                <p class="card-text">Click to open popup.</p>
-            </div>
-        </div>
-        <div class="card" data-id="1">
-            <div class="card-body">
-                <h5 class="card-title">Card 1</h5>
-                <p class="card-text">Click to open popup.</p>
-            </div>
-        </div>
-        <div class="card" data-id="0">
-            <div class="card-body">
-                <h5 class="card-title">Card 0</h5>
-                <p class="card-text">Click to open popup.</p>
-            </div>
-        </div>
+    <!-- 카드 보기 Modal -->
+    <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div id="mediaContainer"></div>
+                    <h2 id="memeTitle"></h2>
+                    <p id="memeDate"></p>
+                    <p id="memeDescription"></p>
+                </div>
 
-
-        <!-- Modal -->
-        <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-body">
-                        <div id="mediaContainer"></div>
-                        <h2 id="memeTitle"></h2>
-                        <p id="memeDate"></p>
-                        <p id="memeDescription"></p>
-                    </div>
-
-                    <div class="modal-footer justify-content-center">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">닫기</button>
-                    </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">닫기</button>
                 </div>
             </div>
         </div>
+    </div>
     </div>
 </body>
 
