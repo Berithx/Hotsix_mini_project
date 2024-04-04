@@ -8,80 +8,90 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-</head>
-<style>
-    .footer-btns {
-        margin: 0px auto 0px auto;
-    }
-</style>
-<script type="module">
-    // Firebase SDK 라이브러리 가져오기
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-    import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-    import { getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-    import { getCountFromServer } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-    const firebaseConfig = {
-        apiKey: "AIzaSyClIkkIJGEg-ACcFwVlmMBCMVr0EyhhFjQ",
-          authDomain: "sparta-89004.firebaseapp.com",
-          projectId: "sparta-89004",
-          storageBucket: "sparta-89004.appspot.com",
-          messagingSenderId: "741591338323",
-          appId: "1:741591338323:web:46afa818eaeda0193125a6",
-          measurementId: "G-W8KQ6N58T5"
-    };
-
-
-    // Firebase 인스턴스 초기화
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    let isImageTemp = true;
-
-    $('#video').hide();
-
-    $("#imgbtn").click(async function () {
-        isImageTemp = true;
-        $('#image').show();
-        $('#video').hide();
-    })
-
-    $("#vdobtn").click(async function () {
-        isImageTemp = false;
-        $('#image').hide();
-        $('#video').show();
-    })
-
-    $("#writebtn").click(async function () {
-        const snapshot = await getCountFromServer(collection(db, "memes"));
-        let id = snapshot.data().count;
-
-        let isImage = isImageTemp;
-        let source;
-        if (isImage) {
-            source = $('#image').val();
-        } else {
-            source = $('#video').val();
+    <style>
+        .footer-btns {
+            margin: 0px auto 0px auto;
         }
-        let title = $('#title').val();
-        let year = $('#year').val();
-        let content = $('#content').val();
-        let doc = {
-            'id': id,
-            'isImage': isImage,
-            'source': source,
-            'title': title,
-            'year': year,
-            'content': content
+    </style>
+    <script type="module">
+        // Firebase SDK 라이브러리 가져오기
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyClIkkIJGEg-ACcFwVlmMBCMVr0EyhhFjQ",
+            authDomain: "sparta-89004.firebaseapp.com",
+            projectId: "sparta-89004",
+            storageBucket: "sparta-89004.appspot.com",
+            messagingSenderId: "741591338323",
+            appId: "1:741591338323:web:46afa818eaeda0193125a6",
+            measurementId: "G-W8KQ6N58T5"
         };
 
-        await addDoc(collection(db, "memes"), doc);
-        window.location.reload();
-    })
-</script>
+
+        // Firebase 인스턴스 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let isImageTemp = true;
+
+        function guid() {
+            function s4() {
+                return Math.floor((1 + Math.random()) * 0x10000)
+                    .toString(16)
+                    .substring(1);
+            }
+            return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+                s4() + '-' + s4() + s4() + s4();
+        }
+
+        $('#video').hide();
+
+        $("#imgbtn").click(async function () {
+            isImageTemp = true;
+            $('#image').show();
+            $('#video').hide();
+        })
+
+        $("#vdobtn").click(async function () {
+            isImageTemp = false;
+            $('#image').hide();
+            $('#video').show();
+        })
+
+        $("#writebtn").click(async function () {
+            let id = guid();
+            let isImage = isImageTemp;
+            let source;
+            if (isImage) {
+                source = $('#image').val();
+            } else {
+                source = $('#video').val();
+            }
+            let title = $('#title').val();
+            let year = $('#year').val();
+            let content = $('#content').val();
+            let data = {
+                'id': id,
+                'isImage': isImage,
+                'source': source,
+                'title': title,
+                'year': year,
+                'content': content,
+                'timestamp': new Date()
+            };
+
+            await setDoc(doc(db, "memes", String(id)), data);
+            window.location.reload();
+        })
+    </script>
+</head>
 
 <body>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
@@ -90,12 +100,12 @@
 
     <!-- Button trigger modal -->
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#writemodal">
-        모달 테스트
+        글쓰기
     </button>
 
     <!-- Modal -->
     <div class="modal fade" id="writemodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body">
                     <div class="mypostingbox" id="postingbox">
@@ -143,11 +153,21 @@
                                 <option value="2002">2002</option>
                                 <option value="2001">2001</option>
                                 <option value="2000">2000</option>
+                                <option value="1999">1999</option>
+                                <option value="1998">1998</option>
+                                <option value="1997">1997</option>
+                                <option value="1996">1996</option>
+                                <option value="1995">1995</option>
+                                <option value="1994">1994</option>
+                                <option value="1993">1993</option>
+                                <option value="1992">1992</option>
+                                <option value="1991">1991</option>
+                                <option value="1990">1990</option>
                             </select>
                         </div>
                         <p>내용</p>
                         <div class="form-floating">
-                            <textarea class="form-control" placeholder="내용" id="content"
+                            <textarea class="form-control" maxlength='500' placeholder="내용" id="content"
                                 style="height: 100px"></textarea>
                             <label for="floatingTextarea2">(500자 이하)</label>
                         </div>
