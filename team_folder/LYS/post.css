@@ -1,0 +1,46 @@
+
+.card-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .card-group .card {
+    flex: 1 0 300px;
+    cursor: pointer;
+  }
+  
+  .card-group .card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal-fade {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .modal-dialog {
+    margin: 0 auto;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-footer .btn {
+    width: 120px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  #memeDate{
+    text-align: right;
+  }
+
+  #memeDescription{
+    height: 100px;
+    overflow: auto;
+  }
