@@ -23,12 +23,12 @@
     // For Firebase JS SDK v7.20.0 and later, measurementId is optional
     const firebaseConfig = {
         apiKey: "AIzaSyClIkkIJGEg-ACcFwVlmMBCMVr0EyhhFjQ",
-          authDomain: "sparta-89004.firebaseapp.com",
-          projectId: "sparta-89004",
-          storageBucket: "sparta-89004.appspot.com",
-          messagingSenderId: "741591338323",
-          appId: "1:741591338323:web:46afa818eaeda0193125a6",
-          measurementId: "G-W8KQ6N58T5"
+        authDomain: "sparta-89004.firebaseapp.com",
+        projectId: "sparta-89004",
+        storageBucket: "sparta-89004.appspot.com",
+        messagingSenderId: "741591338323",
+        appId: "1:741591338323:web:46afa818eaeda0193125a6",
+        measurementId: "G-W8KQ6N58T5"
     };
 
     // Firebase 인스턴스 초기화
@@ -48,9 +48,72 @@
         return match ? match[1] : null;
     }
 
+    // 텍스트 내에 존재하는 링크를 하이퍼링크로 변환
+    function convertLinks(text) {
+        // URL 패턴 정규식
+        const urlPattern = /(https?:\/\/[^\s]+)/g;
+
+        // 링크를 하이퍼링크로 변환
+        const convertedText = text.replace(urlPattern, function (url) {
+            if (url.includes('">')) {
+                // 이미 <a> 태그로 감싸진 URL인 경우 원본 URL 반환
+                return url;
+            } else {
+                // <a> 태그로 감싸지 않은 URL인 경우 하이퍼링크로 변환
+                return '<a href="' + url + '" target="_blank">' + url + '</a>';
+            }
+        });
+
+        return convertedText;
+    }
+
+    // mediaContainer 안에 imageContainer를 붙이는 함수
+    // 무조건 성공시키는데 예외가 추가되면 실패 시 false 반환 기능 추가
+    function makeImageContainer(mediaContainer, row) {
+        // 이미지 표시
+        const imageContainer = document.createElement('div');
+        imageContainer.classList.add('modal-image-container');
+        const image = document.createElement('img');
+        image.src = row['source'];
+        image.classList.add('img-fluid', 'modal-image');
+
+        imageContainer.appendChild(image);
+        mediaContainer.appendChild(imageContainer);
+
+        return true;
+    }
+
+    // mediaContainer 안에 videoContainer를 붙이는 함수
+    // video id가 유효하지않으면 false 반환
+    function makeVideoContainer(mediaContainer, row) {
+        // 유튜브 비디오 재생
+        const videoContainer = document.createElement('div');
+        videoContainer.classList.add('modal-video-container');
+        const videoId = getYouTubeVideoId(row['source']);
+        if (videoId) // video id가 null로 반환 되었을 때 예외 처리
+        {
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1;`;
+            iframe.classList.add('modal-video');
+            iframe.setAttribute('frameborder', '0');
+            iframe.setAttribute('allowFullscreen', 'false');
+
+            videoContainer.appendChild(iframe);
+            mediaContainer.appendChild(videoContainer);
+
+            return true;
+        }
+        else {
+            console.log("유효한 영상 주소가 아닙니다.");
+            alert("유효한 영상 주소가 아닙니다.");
+
+            return false;
+        }
+    }
+
     function openPostModal(row) {
         //console.log(row['id']);
-        //console.log(row['sourceType']);
+        //console.log(row['isImage']);
         //console.log(row['source']);
         //console.log(row['title']);
         //console.log(row['year']);
@@ -59,35 +122,40 @@
         const mediaContainer = document.getElementById('mediaContainer');
         mediaContainer.innerHTML = '';
 
-        const isImage = row['sourceType'] == "image"; //db에 isImage 값 추가되면 교체하기
-        if (isImage){
-            // 이미지 표시
-            const image = document.createElement('img');
-            image.src = row['source'];
-            image.classList.add('img-fluid');
-            mediaContainer.appendChild(image);
+        let isShowModal = false;
+        if (row['isImage']) {
+            isShowModal = makeImageContainer(mediaContainer, row);
         }
-        else{
-            // 유튜브 비디오 재생
-            const videoId = getYouTubeVideoId(row['source']);
-            const iframe = document.createElement('iframe');
-            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            iframe.allowFullscreen = false;
-            iframe.width = '100%';
-            iframe.height = '300px';
-            mediaContainer.appendChild(iframe);
+        else {
+            isShowModal = makeVideoContainer(mediaContainer, row);
         }
 
-        const memeTitle = document.getElementById('memeTitle');
-        const memeDate = document.getElementById('memeDate');
-        const memeDescription = document.getElementById('memeDescription');
+        if (isShowModal) {
+            const memeTitle = document.getElementById('memeTitle');
+            const memeDate = document.getElementById('memeDate');
+            const memeDescription = document.getElementById('memeDescription');
 
-        memeTitle.textContent = row['title'];
-        memeDate.textContent = row['year']; //+ row['month']
-        memeDescription.textContent = row['content'];
+            memeTitle.textContent = row['title'];
+            memeDate.textContent = row['year']; //+ row['month']
 
-        postModal.show();
+            memeDescription.innerHTML = convertLinks(row['content']); // 하이퍼링크를 사용하는 경우 textContent 사용이 아닌 innerHTML 사용
+
+            postModal.show();
+        }
     }
+
+    // postModal이 닫힐 때 기존 유튜브 영상 비우기
+    postModal._element.addEventListener('hidden.bs.modal', function () {
+        const videoContainer = document.querySelector('.modal-video-container');
+        if (videoContainer) {
+            const iframe = videoContainer.querySelector('iframe');
+            if (iframe) {
+                const videoSrc = iframe.src;
+                iframe.src = '';
+                iframe.src = videoSrc;
+            }
+        }
+    });
 
     // class가 card인 것을 찾은 뒤 click 이벤트 등록
     document.querySelectorAll('.card').forEach(card => {
@@ -96,6 +164,7 @@
 
             let docs = await getDocs(collection(db, "memes"));
 
+            let isFind = false;
             docs.forEach((doc) => {
                 let row = doc.data();
 
@@ -108,8 +177,14 @@
 
                 if (row['id'] == cardId) {
                     openPostModal(row);
+                    isFind = true;
                 }
             })
+
+            if (!isFind) {
+                console.log("데이터를 찾지못했습니다.");
+                alert("데이터를 찾지 못했습니다");
+            }
         });
     });
 
@@ -118,38 +193,37 @@
 <body>
     <div class="card-group">
         <!-- 테스트용 카드, 카드 만들때 data-id 필요 -->
-        <div class="card" data-id="2"> 
+        <div class="card" data-id="1">
             <div class="card-body">
                 <h5 class="card-title">Card 1</h5>
                 <p class="card-text">Click to open popup.</p>
             </div>
         </div>
-        <div class="card" data-id="3">
+        <div class="card" data-id="2">
             <div class="card-body">
                 <h5 class="card-title">Card 2</h5>
                 <p class="card-text">Click to open popup.</p>
             </div>
         </div>
+    </div>
 
+    <!-- Modal -->
+    <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div id="mediaContainer"></div>
+                    <h2 id="memeTitle"></h2>
+                    <p id="memeDate"></p>
+                    <p id="memeDescription"></p>
+                </div>
 
-        <!-- Modal -->
-        <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-body">
-                        <div id="mediaContainer"></div>
-                            <h2 id="memeTitle"></h2>
-                            <p id="memeDate"></p>
-                            <p id="memeDescription"></p>
-                        </div>
-                    
-                        <div class="modal-footer justify-content-center">
-                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">닫기</button>
-                        </div>
-                    </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">닫기</button>
                 </div>
             </div>
         </div>
+    </div>
 </body>
 
 </html>
