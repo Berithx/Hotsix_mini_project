@@ -57,13 +57,22 @@
             isImageTemp = true;
             $('#image').show();
             $('#video').hide();
+            checkEmpty();
         })
 
         $("#vdobtn").click(async function () {
             isImageTemp = false;
             $('#image').hide();
             $('#video').show();
+            checkEmpty();
         })
+
+        // URL 유효성을 확인하는 함수
+        function isValidURL(url) {
+            // URL 정규 표현식
+            var pattern = /^(ftp|http|https):\/\/[^ "]+$/;
+            return pattern.test(url);
+        }
 
         $("#writebtn").click(async function () {
             let id = guid();
@@ -77,19 +86,61 @@
             let title = $('#title').val();
             let year = $('#year').val();
             let content = $('#content').val();
-            let data = {
-                'id': id,
-                'isImage': isImage,
-                'source': source,
-                'title': title,
-                'year': year,
-                'content': content,
-                'timestamp': new Date()
-            };
 
-            await setDoc(doc(db, "memes", String(id)), data);
-            window.location.reload();
+            // 입력된 값이 유효한 URL인지 확인
+            if (isValidURL(source)) {
+                // 유효한 URL인 경우 업로드
+                let data = {
+                    'id': id,
+                    'isImage': isImage,
+                    'source': source,
+                    'title': title,
+                    'year': year,
+                    'content': content,
+                    'timestamp': new Date()
+                };
+
+                await setDoc(doc(db, "memes", String(id)), data);
+                window.location.reload();
+
+                alert('업로드 성공!');
+            } else {
+                // 유효하지 않은 URL인 경우 경고 표시
+                alert('주소를 확인해 주세요.');
+            }
         })
+
+        // input 필드가 변경될 때마다 호출되는 함수
+        function checkEmpty() {
+            // input 필드의 값을 가져옴
+            let image = $('#image').val().trim();
+            let video = $('#video').val().trim();
+            let title = $('#title').val().trim();
+            let year = document.getElementById('year').selectedIndex;
+            let content = $('#content').val().trim();
+
+            if (isImageTemp) {
+                if (image !== '' && title !== '' && year !== 0 && content !== '') {
+                    document.getElementById('writebtn').disabled = false;
+                } else {
+                    document.getElementById('writebtn').disabled = true;
+                }
+            } else {
+                if (video !== '' && title !== '' && year !== 0 && content !== '') {
+                    document.getElementById('writebtn').disabled = false;
+                } else {
+                    document.getElementById('writebtn').disabled = true;
+                }
+            }
+        }
+
+        // input 필드가 변경될 때마다 checkInput 함수 호출
+        document.getElementById('image').addEventListener('input', checkEmpty);
+        document.getElementById('video').addEventListener('input', checkEmpty);
+        document.getElementById('title').addEventListener('input', checkEmpty);
+        document.getElementById('year').addEventListener('change', checkEmpty);
+        document.getElementById('content').addEventListener('input', checkEmpty);
+
     </script>
 </head>
 
@@ -175,7 +226,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="footer-btns">
-                        <button type="button" class="btn btn-primary" id="writebtn">업로드</button>
+                        <button type="button" class="btn btn-primary" id="writebtn" disabled>업로드</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
                     </div>
                 </div>
