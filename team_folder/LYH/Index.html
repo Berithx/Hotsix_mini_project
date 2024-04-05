@@ -530,6 +530,17 @@
                     displayResult(row);
                 });
             }
+
+            // 각 카드에 대해 클릭 이벤트 리스너 다시 등록
+            $('.card').on('click', async function () {
+                const clickedCardId = $(this).data('id');
+
+                // 클릭된 카드의 id 값을 사용하여 모달 열기
+                let clickedDoc = sortedDocs.find(doc => doc.id === clickedCardId);
+                if (clickedDoc) {
+                    openPostModal(clickedDoc.data());
+                }
+            });
         });
     </script>
 </head>
@@ -546,6 +557,7 @@
                 <option value="vdo">영상</option>
             </select>
         </div>
+
         <div style="width: 30%;">
             <form class="d-flex" role="search">
                 <input class="query form-control me-2" id="queryText" type="search" placeholder="Search"
@@ -644,6 +656,7 @@
         <div id="cards" class="row row-cols-1 row-cols-md-5 g-4">
         </div>
     </div>
+    </div>
 
     <!-- 카드 보기 Modal -->
     <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -662,7 +675,7 @@
             </div>
         </div>
     </div>
-
+    </div>
 </body>
 
 </html>
