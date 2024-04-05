@@ -351,7 +351,7 @@
         });
 
         // id를 기준으로 내림차순으로 정렬
-        sortedDocs.sort((a, b) => b.id.localeCompare(a.titmestamp));
+        sortedDocs.sort((a, b) => b.data().timestamp - a.data().timestamp);
 
         // 정렬된 문서를 이용하여 카드 생성
         sortedDocs.forEach((doc) => {
@@ -363,6 +363,7 @@
             let title = row['title'];
             let content = row['content'];
             let year = row['year'];
+            let whenwrite = row['timestamp']
 
             let temp_html = `
                 <div class="col">
@@ -376,6 +377,7 @@
                             <div class="card-footer" style="text-align: right";>
                             <small>${year}년도</small>
                         </div>
+                        작성일자 식별용: ${whenwrite}
                     </div>
                 </div>`;
 
