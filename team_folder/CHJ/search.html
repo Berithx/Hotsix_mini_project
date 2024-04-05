@@ -45,18 +45,14 @@
 
         .card-group {
             width: 75%;
-            margin: 80px auto 0px auto;
+            margin: 70px auto auto auto;
 
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .card-group {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
         }
 
         .card-group .card {
@@ -168,7 +164,11 @@
                 e.preventDefault();
 
                 const queryText = $('#queryText').val().toLowerCase();
-                const allDocs = await getDocs(collection(db, "memes"));
+                if (queryText.length < 2) {
+                    alert("검색어는 두 글자 이상 입력하세요.");
+                    window.location.reload();
+                }
+                const allDocs = await getDocs(query(collection(db, "memes"), orderBy("timestamp", "desc")));
 
                 $('#cards').empty();
 
@@ -181,14 +181,21 @@
 
                 if ($('#cards').children().length === 0) {
                     alert("검색결과가 없습니다.");
+                    window.location.reload();
                 }
             }
         });
 
         // 버튼 클릭으로 검색
-        $("#searchBtn").click(async function () {
+        $("#searchBtn").click(async function (e) {
+            e.preventDefault();
+            
             const queryText = $('#queryText').val().toLowerCase();
-            const allDocs = await getDocs(collection(db, "memes"));
+            if (queryText.length < 2) {
+                alert("검색어는 두 글자 이상 입력하세요.");
+                window.location.reload();
+            }
+            const allDocs = await getDocs(query(collection(db, "memes"), orderBy("timestamp", "desc")));
 
             $('#cards').empty();
 
@@ -201,6 +208,7 @@
 
             if ($('#cards').children().length === 0) {
                 alert("검색결과가 없습니다.");
+                window.location.reload();
             }
         })
 
@@ -355,21 +363,23 @@
         });
 
         // id를 기준으로 내림차순으로 정렬
-        sortedDocs.sort((a, b) => b.id.localeCompare(a.titmestamp));
+        sortedDocs.sort((a, b) => b.data().timestamp - a.data().timestamp);
 
         // 정렬된 문서를 이용하여 카드 생성
         sortedDocs.forEach((doc) => {
             let row = doc.data();
 
             let cardId = row['id'];
+            let sourceType = row['isImage'];
             let source = row['source'];
             let title = row['title'];
             let content = row['content'];
             let year = row['year'];
+            let whenwrite = row['timestamp']
 
             let temp_html = `
                 <div class="col">
-                    <div class="card" data-id="${cardId}" style="height: 100%;">
+                    <div class="card" data-id="${cardId}" data-is-image="${sourceType}" style="height: 100%;">
                         <img src="${source}"
                             class="card-img-top" alt="...">
                             <div class="card-body">
@@ -379,6 +389,7 @@
                             <div class="card-footer" style="text-align: right";>
                             <small>${year}년도</small>
                         </div>
+                        작성일자 식별용: ${whenwrite}
                     </div>
                 </div>`;
 
@@ -415,13 +426,22 @@
             isImageTemp = true;
             $('#image').show();
             $('#video').hide();
+            checkEmpty();
         })
 
         $("#vdobtn").click(async function () {
             isImageTemp = false;
             $('#image').hide();
             $('#video').show();
+            checkEmpty();
         })
+
+        // URL 유효성을 확인하는 함수
+        function isValidURL(url) {
+            // URL 정규 표현식
+            var pattern = /^(ftp|http|https):\/\/[^ "]+$/;
+            return pattern.test(url);
+        }
 
         $("#writebtn").click(async function () {
             let id = guid();
@@ -435,19 +455,107 @@
             let title = $('#title').val();
             let year = $('#year').val();
             let content = $('#content').val();
-            let data = {
-                'id': id,
-                'isImage': isImage,
-                'source': source,
-                'title': title,
-                'year': year,
-                'content': content,
-                'timestamp': new Date()
-            };
+            l// 입력된 값이 유효한 URL인지 확인
+            if (isValidURL(source)) {
+                // 유효한 URL인 경우 업로드
+                let data = {
+                    'id': id,
+                    'isImage': isImage,
+                    'source': source,
+                    'title': title,
+                    'year': year,
+                    'content': content,
+                    'timestamp': new Date()
+                };
 
-            await setDoc(doc(db, "memes", String(id)), data);
-            window.location.reload();
+                await setDoc(doc(db, "memes", String(id)), data);
+                window.location.reload();
+
+                alert('업로드 성공!');
+            } else {
+                // 유효하지 않은 URL인 경우 경고 표시
+                alert('주소를 확인해 주세요.');
+            }
         })
+
+        // input 필드가 변경될 때마다 호출되는 함수
+        function checkEmpty() {
+            // input 필드의 값을 가져옴
+            let image = $('#image').val().trim();
+            let video = $('#video').val().trim();
+            let title = $('#title').val().trim();
+            let year = document.getElementById('year').selectedIndex;
+            let content = $('#content').val().trim();
+
+            if (isImageTemp) {
+                if (image !== '' && title !== '' && year !== 0 && content !== '') {
+                    document.getElementById('writebtn').disabled = false;
+                } else {
+                    document.getElementById('writebtn').disabled = true;
+                }
+            } else {
+                if (video !== '' && title !== '' && year !== 0 && content !== '') {
+                    document.getElementById('writebtn').disabled = false;
+                } else {
+                    document.getElementById('writebtn').disabled = true;
+                }
+            }
+        }
+
+        // input 필드가 변경될 때마다 checkInput 함수 호출
+        document.getElementById('image').addEventListener('input', checkEmpty);
+        document.getElementById('video').addEventListener('input', checkEmpty);
+        document.getElementById('title').addEventListener('input', checkEmpty);
+        document.getElementById('year').addEventListener('change', checkEmpty);
+        document.getElementById('content').addEventListener('input', checkEmpty);
+
+        // select 요소에서 값이 변경될 때마다 호출되는 이벤트 리스너 추가
+        $("select.form-select").change(async function () {
+
+            // 사용자가 선택한 옵션 값 가져오기
+            const selectedValue = $(this).children("option:selected").val();
+
+            // 모든 카드 없애기
+            $(".col").remove();
+
+            // 선택한 옵션 값에 따라 필터링하여 해당하는 카드만 표시
+            if (selectedValue === "jjal") {
+                // sourceType이 true인 카드만 표시
+                sortedDocs.forEach((doc) => {
+                    let row = doc.data();
+                    if (row.isImage) {
+                        displayResult(row);
+                    }
+                });
+
+            } else if (selectedValue === "vdo") {
+                // sourceType이 false인 카드만 표시
+                // sourceType이 false인 카드만 생성
+                sortedDocs.forEach((doc) => {
+                    let row = doc.data();
+                    if (!row.isImage) {
+                        displayResult(row);
+                    }
+                });
+            } else {
+                // 전체 카드 표시
+                sortedDocs.forEach((doc) => {
+                    let row = doc.data();
+                    displayResult(row);
+                });
+            }
+
+            // 각 카드에 대해 클릭 이벤트 리스너 다시 등록
+            $('.card').on('click', async function () {
+                const clickedCardId = $(this).data('id');
+
+                // 클릭된 카드의 id 값을 사용하여 모달 열기
+                let clickedDoc = sortedDocs.find(doc => doc.id === clickedCardId);
+                if (clickedDoc) {
+                    openPostModal(clickedDoc.data());
+                }
+            });
+        });
     </script>
 </head>
 
@@ -458,10 +566,9 @@
     <div class="sub_body">
         <div style="margin-right: auto;">
             <select class="form-select" aria-label="Default select example" style="width: 150px;">
-                <option selected>보기 구분</option>
-                <option value="1">전체보기</option>
-                <option value="2">짤</option>
-                <option value="3">영상</option>
+                <option selected>전체보기</option>
+                <option value="jjal">짤</option>
+                <option value="vdo">영상</option>
             </select>
         </div>
 
@@ -550,7 +657,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="footer-btns">
-                        <button type="button" class="btn btn-primary" id="writebtn">업로드</button>
+                        <button type="button" class="btn btn-primary" id="writebtn" disabled>업로드</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
                     </div>
                 </div>
@@ -560,7 +667,7 @@
 
     <!-- 카드 리스트 -->
     <div class="card-group">
-        <div id="cards" class="row row-cols-1 row-cols-md-3 g-4">
+        <div id="cards" class="row row-cols-1 row-cols-md-5 g-4">
         </div>
     </div>
     </div>
