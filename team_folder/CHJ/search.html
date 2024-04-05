@@ -187,9 +187,15 @@
         });
 
         // 버튼 클릭으로 검색
-        $("#searchBtn").click(async function () {
+        $("#searchBtn").click(async function (e) {
+            e.preventDefault();
+            
             const queryText = $('#queryText').val().toLowerCase();
-            const allDocs = await getDocs(collection(db, "memes"));
+            if (queryText.length < 2) {
+                alert("검색어는 두 글자 이상 입력하세요.");
+                window.location.reload();
+            }
+            const allDocs = await getDocs(query(collection(db, "memes"), orderBy("timestamp", "desc")));
 
             $('#cards').empty();
 
