@@ -76,94 +76,63 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-
         // 엔터 키로 검색
-        $('#query').on('keypress', function (e) {
-            if (e.which === 13) { 
-                e.preventDefault(); 
+        $('#query').on('keypress', async function (e) {
+            if (e.which === 13) {
+                e.preventDefault();
 
-                (async function () {
-                    let queryText = $('#query').val();
-                    const q = query(collection(db, "meme"), where("title", ">=", queryText), where("title", "<=", queryText + "\uf8ff"));
+                const queryText = $('#query').val().toLowerCase();
+                const allDocs = await getDocs(collection(db, "meme"));
 
-                    try {
-                        let docs = await getDocs(q);
+                $('#card').empty();
 
-                        if (docs.empty) {
-                            alert("검색결과가 없습니다.");
-                        } else {
-                            docs.forEach((doc) => {
-                                console.log(doc.id, " => ", doc.data());
-                                let row = doc.data();
-                                let image = row['image'];
-                                let title = row['title'];
-                                let star = row['star'];
-                                let comment = row['comment'];
-
-                                let temp_html = `
-                                <div class="col">
-                                    <div class="card h-100">
-                                        <img src="${image}"
-                                            class="card-img-top" alt="${title}">
-                                        <div class="card-body">
-                                            <h5 class="card-title">${title}</h5>
-                                            <p class="card-text">${star}</p>
-                                            <p class="card-text">${comment}</p>
-                                        </div>
-                                    </div>
-                                </div>`;
-
-                                $('#card').empty();
-                                $('#card').append(temp_html);
-                            });
-                        }
-                    } catch (error) {
-                        console.error("Error", error);
+                allDocs.forEach((doc) => {
+                    const row = doc.data();
+                    if (row.title.toLowerCase().includes(queryText)) {
+                        displayResult(row);
                     }
-                })();
+                });
+
+                if ($('#card').children().length === 0) {
+                    alert("검색결과가 없습니다.");
+                }
             }
         });
 
         // 버튼 클릭으로 검색
         $("#search").click(async function () {
-            let queryText = $('#query').val();
-            const q = query(collection(db, "meme"), where("title", ">=", queryText), where("title", "<=", queryText + "\uf8ff"));
+            const queryText = $('#query').val().toLowerCase();
+            const allDocs = await getDocs(collection(db, "meme"));
 
-            try {
-                let docs = await getDocs(q);
+            $('#card').empty();
 
-                if (docs.empty) {
-                    alert("검색결과가 없습니다.");
-                } else {
-                    docs.forEach((doc) => {
-                        console.log(doc.id, " => ", doc.data());
-                        let row = doc.data();
-                        let image = row['image'];
-                        let title = row['title'];
-                        let star = row['star'];
-                        let comment = row['comment'];
-
-                        let temp_html = `
-                                <div class="col">
-                                    <div class="card h-100">
-                                        <img src="${image}"
-                                            class="card-img-top" alt="${title}">
-                                        <div class="card-body">
-                                            <h5 class="card-title">${title}</h5>
-                                            <p class="card-text">${star}</p>
-                                            <p class="card-text">${comment}</p>
-                                        </div>
-                                    </div>
-                                </div>`;
-
-                        $('#card').empty();
-                        $('#card').append(temp_html);
-                    });
+            allDocs.forEach((doc) => {
+                const row = doc.data();
+                if (row.title.toLowerCase().includes(queryText)) {
+                    displayResult(row);
                 }
-            } catch (error) {
-                console.error("Error", error);
+            });
+
+            if ($('#card').children().length === 0) {
+                alert("검색결과가 없습니다.");
             }
         })
+
+        function displayResult(row) {
+            const { image, title, star, comment } = row;
+            const temp_html = `
+            <div class="col">
+                <div class="card h-100">
+                    <img src="${image}" class="card-img-top" alt="${title}">
+                    <div class="card-body">
+                        <h5 class="card-title">${title}</h5>
+                        <p class="card-text">${star}</p>
+                        <p class="card-text">${comment}</p>
+                    </div>
+                </div>
+            </div>`;
+            $('#card').append(temp_html);
+        }
 
 
         $("#postingbtn").click(async function () {

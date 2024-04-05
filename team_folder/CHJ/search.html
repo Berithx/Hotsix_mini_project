@@ -163,95 +163,66 @@
         const db = getFirestore(app);
 
         // 엔터 키로 검색
-        $('#query form-control me-2').on('keypress', function (e) {
+        $('#queryText').on('keypress', async function (e) {
             if (e.which === 13) {
                 e.preventDefault();
 
-                (async function () {
-                    let queryText = $('#qquery form-control me-2').val();
-                    const q = query(collection(db, "meme"), where("title", ">=", queryText), where("title", "<=", queryText + "\uf8ff"));
+                const queryText = $('#queryText').val().toLowerCase();
+                const allDocs = await getDocs(collection(db, "memes"));
 
-                    try {
-                        let docs = await getDocs(q);
+                $('#cards').empty();
 
-                        if (docs.empty) {
-                            alert("검색결과가 없습니다.");
-                        } else {
-                            docs.forEach((doc) => {
-                                console.log(doc.id, " => ", doc.data());
-                                let row = doc.data();
-                                let cardId = row['id'];
-                                let source = row['source'];
-                                let title = row['title'];
-                                let content = row['content'];
-                                let year = row['year'];
-
-                                let temp_html = `
-                                <div class="col">
-                                    <div class="card" data-id="${cardId}" style="height: 100%;">
-                                        <img src="${source}"
-                                            class="card-img-top" alt="...">
-                                        <div class="card-body">
-                                            <h5 class="card-title">${title}</h5>
-                                            <p class="card-text">${content}</p>
-                                        </div>
-                                        <div class="card-footer" style="text-align: right";>
-                                            <small>${year}년도</small>
-                                        </div>
-                                    </div>
-                                </div>`;
-
-                                $('#card').empty();
-                                $('#card').append(temp_html);
-                            });
-                        }
-                    } catch (error) {
-                        console.error("Error", error);
+                allDocs.forEach((doc) => {
+                    const row = doc.data();
+                    if (row.title.toLowerCase().includes(queryText)) {
+                        displayResult(row);
                     }
-                })();
+                });
+
+                if ($('#cards').children().length === 0) {
+                    alert("검색결과가 없습니다.");
+                }
             }
         });
 
         // 버튼 클릭으로 검색
-        $("#btn btn-outline-secondary").click(async function () {
-            let queryText = $('#query form-control me-2').val();
-            const q = query(collection(db, "meme"), where("title", ">=", queryText), where("title", "<=", queryText + "\uf8ff"));
+        $("#searchBtn").click(async function () {
+            const queryText = $('#queryText').val().toLowerCase();
+            const allDocs = await getDocs(collection(db, "memes"));
 
-            try {
-                let docs = await getDocs(q);
+            $('#cards').empty();
 
-                if (docs.empty) {
-                    alert("검색결과가 없습니다.");
-                } else {
-                    docs.forEach((doc) => {
-                        console.log(doc.id, " => ", doc.data());
-                        let row = doc.data();
-                        let image = row['image'];
-                        let title = row['title'];
-                        let star = row['star'];
-                        let comment = row['comment'];
-
-                        let temp_html = `
-                                <div class="col">
-                                    <div class="card h-100">
-                                        <img src="${image}"
-                                            class="card-img-top" alt="${title}">
-                                        <div class="card-body">
-                                            <h5 class="card-title">${title}</h5>
-                                            <p class="card-text">${star}</p>
-                                            <p class="card-text">${comment}</p>
-                                        </div>
-                                    </div>
-                                </div>`;
-
-                        $('#card').empty();
-                        $('#card').append(temp_html);
-                    });
+            allDocs.forEach((doc) => {
+                const row = doc.data();
+                if (row.title.toLowerCase().includes(queryText)) {
+                    displayResult(row);
                 }
-            } catch (error) {
-                console.error("Error", error);
+            });
+
+            if ($('#cards').children().length === 0) {
+                alert("검색결과가 없습니다.");
             }
         })
+
+        // HTML 형태의 결과를 화면에 출력
+        function displayResult(row) {
+            const { content, id, isImage, source, timestamp, title, year } = row;
+            const temp_html = `
+            <div class="col">
+                <div class="card" data-id="${id}" style="height: 100%;">
+                    <img src="${source}"
+                        class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">${title}</h5>
+                        <p class="card-text">${content}</p>
+                    </div>
+                    <div class="card-footer" style="text-align: right";>
+                        <small>${year}년도</small>
+                    </div>
+                </div>
+            </div>`;
+            $('#cards').append(temp_html);
+        }
 
         // post용 modal 선언
         const postModal = new bootstrap.Modal(document.getElementById('postmodal'));
@@ -496,8 +467,9 @@
 
         <div style="width: 30%;">
             <form class="d-flex" role="search">
-                <input class="query form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-secondary" type="submit">Search</button>
+                <input class="query form-control me-2" id="queryText" type="search" placeholder="Search"
+                    aria-label="Search">
+                <button class="btn btn-outline-secondary" id="searchBtn" type="submit">Search</button>
         </div>
     </div>
 
