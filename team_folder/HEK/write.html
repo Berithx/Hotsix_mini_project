@@ -13,6 +13,16 @@
         .footer-btns {
             margin: 0px auto 0px auto;
         }
+
+        .persnalInputSection{
+            float: right;
+        }
+
+        .persnalInput {
+            margin-left: 2px;
+            width: 100px;
+            height: 20px;
+        }
     </style>
     <script type="module">
         // Firebase SDK 라이브러리 가져오기
@@ -76,6 +86,8 @@
 
         $("#writebtn").click(async function () {
             let id = guid();
+            let nickname = $('#nickname').val();
+            let password = $('#password').val();
             let isImage = isImageTemp;
             let source;
             if (isImage) {
@@ -92,6 +104,8 @@
                 // 유효한 URL인 경우 업로드
                 let data = {
                     'id': id,
+                    'nickname': nickname,
+                    'password': password,
                     'isImage': isImage,
                     'source': source,
                     'title': title,
@@ -113,6 +127,8 @@
         // input 필드가 변경될 때마다 호출되는 함수
         function checkEmpty() {
             // input 필드의 값을 가져옴
+            let nickname = $('#nickname').val().trim();
+            let password = $('#password').val().trim();
             let image = $('#image').val().trim();
             let video = $('#video').val().trim();
             let title = $('#title').val().trim();
@@ -120,13 +136,13 @@
             let content = $('#content').val().trim();
 
             if (isImageTemp) {
-                if (image !== '' && title !== '' && year !== 0 && content !== '') {
+                if (image !== '' && title !== '' && year !== 0 && content !== '' && nickname !== '' && password !== '') {
                     document.getElementById('writebtn').disabled = false;
                 } else {
                     document.getElementById('writebtn').disabled = true;
                 }
             } else {
-                if (video !== '' && title !== '' && year !== 0 && content !== '') {
+                if (video !== '' && title !== '' && year !== 0 && content !== '' && nickname !== '' && password !== '') {
                     document.getElementById('writebtn').disabled = false;
                 } else {
                     document.getElementById('writebtn').disabled = true;
@@ -140,7 +156,9 @@
         document.getElementById('title').addEventListener('input', checkEmpty);
         document.getElementById('year').addEventListener('change', checkEmpty);
         document.getElementById('content').addEventListener('input', checkEmpty);
-
+        document.getElementById('nickname').addEventListener('input', checkEmpty);
+        document.getElementById('password').addEventListener('input', checkEmpty);
+        
     </script>
 </head>
 
@@ -163,17 +181,23 @@
                         <div class="form-floating mb-3">
                             <button type="button" class="btn btn-outline-secondary" id="imgbtn">이미지</button>
                             <button type="button" class="btn btn-outline-secondary" id="vdobtn">동영상</button>
+                            <span class="persnalInputSection">
+                                <span>ID:</span>
+                                <input type="text" class="persnalInput" id="nickname" placeholder="닉네임" maxlength='8'>
+                                <span>PW:</span>
+                                <input type="password" class="persnalInput" id="password" placeholder="비밀번호" maxlength='4'>
+                            </span>
                         </div>
                         <div class="form-floating mb-3">
-                            <input type="email" class="form-control" id="image" placeholder="이미지 주소">
+                            <input type="url" class="form-control" id="image" placeholder="이미지 주소">
                             <label for="floatingInput">이미지 주소</label>
                         </div>
                         <div class="form-floating mb-3">
-                            <input type="email" class="form-control" id="video" placeholder="동영상 주소">
+                            <input type="url" class="form-control" id="video" placeholder="동영상 주소">
                             <label for="floatingInput">동영상 주소</label>
                         </div>
                         <div class="form-floating mb-3">
-                            <input type="email" class="form-control" id="title" placeholder="밈 이름">
+                            <input type="text" class="form-control" id="title" placeholder="밈 이름">
                             <label for="floatingInput">밈 이름</label>
                         </div>
                         <div class="input-group mb-3">
