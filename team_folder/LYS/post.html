@@ -158,6 +158,8 @@
     });
 
     // class가 card인 것을 찾은 뒤 click 이벤트 등록
+    // card가 동적으로 생성되므로 해당 코드를 그대로 사용하지말기
+    // 생성되는 카드마다 이벤트 추가하여 사용
     document.querySelectorAll('.card').forEach(card => {
         card.addEventListener('click', async function () {
             const cardId = this.getAttribute('data-id');
@@ -168,7 +170,7 @@
             docs.forEach((doc) => {
                 let row = doc.data();
 
-                //console.log(row['id']);
+                console.log(row['id']);
                 //console.log(row['sourceType']);
                 //console.log(row['source']);
                 //console.log(row['title']);
@@ -193,13 +195,13 @@
 <body>
     <div class="card-group">
         <!-- 테스트용 카드, 카드 만들때 data-id 필요 -->
-        <div class="card" data-id="1">
+        <div class="card" data-id="299a03c3-3504-1044-798c-0f07fcbee5bb">
             <div class="card-body">
                 <h5 class="card-title">Card 1</h5>
                 <p class="card-text">Click to open popup.</p>
             </div>
         </div>
-        <div class="card" data-id="2">
+        <div class="card" data-id="2a06ebc9-bcdd-48c8-622f-1a5dc3ef4b4f">
             <div class="card-body">
                 <h5 class="card-title">Card 2</h5>
                 <p class="card-text">Click to open popup.</p>
@@ -209,7 +211,7 @@
 
     <!-- Modal -->
     <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body">
                     <div id="mediaContainer"></div>
