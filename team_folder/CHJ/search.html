@@ -14,6 +14,10 @@
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
     <style>
+        .home {
+            cursor: pointer;
+        }
+
         .header {
             width: 75%;
             height: 100px;
@@ -44,7 +48,7 @@
         }
 
         .card-group {
-            width: 75%;
+            width: 70%;
             margin: 70px auto auto auto;
 
             display: flex;
@@ -52,10 +56,11 @@
             gap: 20px;
             flex-direction: row;
             align-items: center;
-            justify-content: center;
+            justify-content: left;
         }
 
         .card-group .card {
+            width: 23vw;
             flex: 1 0 300px;
             cursor: pointer;
         }
@@ -132,6 +137,16 @@
         .footer-btns {
             margin: 0px auto 0px auto;
         }
+
+        .persnalInputSection {
+            float: right;
+        }
+
+        .persnalInput {
+            margin-left: 2px;
+            width: 100px;
+            height: 20px;
+        }
     </style>
 
     <script type="module">
@@ -157,6 +172,11 @@
         // Firebase 인스턴스 초기화
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        //헤드 메인로고 클릭 시 새로고침
+        $("#home").click(async function () {
+            window.location.reload();
+        })
 
         // 엔터 키로 검색
         $('#queryText').on('keypress', async function (e) {
@@ -184,12 +204,23 @@
                     window.location.reload();
                 }
             }
+
+            // 각 카드에 대해 클릭 이벤트 리스너 다시 등록
+            $('.card').on('click', async function () {
+                const clickedCardId = $(this).data('id');
+
+                // 클릭된 카드의 id 값을 사용하여 모달 열기
+                let clickedDoc = sortedDocs.find(doc => doc.id === clickedCardId);
+                if (clickedDoc) {
+                    openPostModal(clickedDoc.data());
+                }
+            });
         });
 
         // 버튼 클릭으로 검색
         $("#searchBtn").click(async function (e) {
             e.preventDefault();
-            
+
             const queryText = $('#queryText').val().toLowerCase();
             if (queryText.length < 2) {
                 alert("검색어는 두 글자 이상 입력하세요.");
@@ -210,6 +241,17 @@
                 alert("검색결과가 없습니다.");
                 window.location.reload();
             }
+
+            // 각 카드에 대해 클릭 이벤트 리스너 다시 등록
+            $('.card').on('click', async function () {
+                const clickedCardId = $(this).data('id');
+
+                // 클릭된 카드의 id 값을 사용하여 모달 열기
+                let clickedDoc = sortedDocs.find(doc => doc.id === clickedCardId);
+                if (clickedDoc) {
+                    openPostModal(clickedDoc.data());
+                }
+            });
         })
 
         // HTML 형태의 결과를 화면에 출력
@@ -375,36 +417,79 @@
             let title = row['title'];
             let content = row['content'];
             let year = row['year'];
-            let whenwrite = row['timestamp']
+            let whenwrite = row['timestamp'];
 
-            let temp_html = `
-                <div class="col">
-                    <div class="card" data-id="${cardId}" data-is-image="${sourceType}" style="height: 100%;">
-                        <img src="${source}"
-                            class="card-img-top" alt="...">
-                            <div class="card-body">
-                            <h5 class="card-title">${title}</h5>
-                            <p class="card-text">${content}</p>
-                        </div>
-                            <div class="card-footer" style="text-align: right";>
-                            <small>${year}년도</small>
-                        </div>
-                        작성일자 식별용: ${whenwrite}
+            let thumbnail; // 영상의 경우 썸네일 이미지로 사용될 변수
+            // 영상인 경우 썸네일 이미지로 설정
+            if (!sourceType) {
+                const videoId = getYouTubeVideoId(source);
+                if (videoId) {
+                    thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                }
+            } else {
+                thumbnail = source;
+            }
+
+            let temp_html;
+            if (sourceType) {
+                // 이미지 카드
+                temp_html = `
+            <div class="col">
+                <div class="card" data-id="${cardId}" data-is-image="${sourceType}" style="height: 100%;">
+                    <img src="${source}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">${title}</h5>
+                        <p class="card-text">${content}</p>
                     </div>
-                </div>`;
+                    <div class="card-footer" style="text-align: right";>
+                        <small>${year}년도</small>
+                    </div>
+                    작성일자 식별용: ${whenwrite}
+                </div>
+            </div>`;
+            } else {
+                // 영상 카드
+                temp_html = `
+            <div class="col">
+                <div class="card" data-id="${cardId}" data-is-image="${sourceType}" data-source="${source}" data-thumbnail="${thumbnail}" style="height: 100%;">
+                    <img src="${thumbnail}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">${title}</h5>
+                        <p class="card-text">${content}</p>
+                    </div>
+                    <div class="card-footer" style="text-align: right";>
+                        <small>${year}년도</small>
+                    </div>
+                    작성일자 식별용: ${whenwrite}
+                </div>
+            </div>`;
+            }
 
             $('#cards').append(temp_html);
 
             const card = document.querySelector(`[data-id="${cardId}"]`);
             card.addEventListener('click', async function () {
                 const clickedCardId = this.getAttribute('data-id');
+                const clickedCardIsImage = this.getAttribute('data-is-image');
+                const clickedCardSource = this.getAttribute('data-source');
 
                 // 클릭된 카드의 id 값을 사용하여 모달 열기
-                let clickedDoc = sortedDocs.find(doc => doc.id === clickedCardId);
-                if (clickedDoc) {
-                    openPostModal(clickedDoc.data());
+                if (clickedCardIsImage === "true") {
+                    // 이미지인 경우 모달에 이미지 출력
+                    openPostModal(row);
+                } else {
+                    // 영상인 경우 모달에 영상 출력
+                    const clickedCardThumbnail = this.getAttribute('data-thumbnail');
+                    openPostModal({
+                        'isImage': false,
+                        'source': clickedCardSource,
+                        'thumbnail': clickedCardThumbnail,
+                        'title': title,
+                        'year': year,
+                        'content': content
+                    });
                 }
-            })
+            });
         });
 
         // 글쓰기 모달
@@ -445,6 +530,8 @@
 
         $("#writebtn").click(async function () {
             let id = guid();
+            let nickname = $('#nickname').val();
+            let password = $('#password').val();
             let isImage = isImageTemp;
             let source;
             if (isImage) {
@@ -455,11 +542,14 @@
             let title = $('#title').val();
             let year = $('#year').val();
             let content = $('#content').val();
-            l// 입력된 값이 유효한 URL인지 확인
+
+            // 입력된 값이 유효한 URL인지 확인
             if (isValidURL(source)) {
                 // 유효한 URL인 경우 업로드
                 let data = {
                     'id': id,
+                    'nickname': nickname,
+                    'password': password,
                     'isImage': isImage,
                     'source': source,
                     'title': title,
@@ -481,6 +571,8 @@
         // input 필드가 변경될 때마다 호출되는 함수
         function checkEmpty() {
             // input 필드의 값을 가져옴
+            let nickname = $('#nickname').val().trim();
+            let password = $('#password').val().trim();
             let image = $('#image').val().trim();
             let video = $('#video').val().trim();
             let title = $('#title').val().trim();
@@ -488,13 +580,13 @@
             let content = $('#content').val().trim();
 
             if (isImageTemp) {
-                if (image !== '' && title !== '' && year !== 0 && content !== '') {
+                if (image !== '' && title !== '' && year !== 0 && content !== '' && nickname !== '' && password !== '') {
                     document.getElementById('writebtn').disabled = false;
                 } else {
                     document.getElementById('writebtn').disabled = true;
                 }
             } else {
-                if (video !== '' && title !== '' && year !== 0 && content !== '') {
+                if (video !== '' && title !== '' && year !== 0 && content !== '' && nickname !== '' && password !== '') {
                     document.getElementById('writebtn').disabled = false;
                 } else {
                     document.getElementById('writebtn').disabled = true;
@@ -508,9 +600,11 @@
         document.getElementById('title').addEventListener('input', checkEmpty);
         document.getElementById('year').addEventListener('change', checkEmpty);
         document.getElementById('content').addEventListener('input', checkEmpty);
+        document.getElementById('nickname').addEventListener('input', checkEmpty);
+        document.getElementById('password').addEventListener('input', checkEmpty);
 
         // select 요소에서 값이 변경될 때마다 호출되는 이벤트 리스너 추가
-        $("select.form-select").change(async function () {
+        $("select.category").change(async function () {
 
             // 사용자가 선택한 옵션 값 가져오기
             const selectedValue = $(this).children("option:selected").val();
@@ -561,11 +655,11 @@
 
 <body>
     <div class="header">
-        <h1>Meme</h1>
+        <h1 class="home" id="home">Meme</h1>
     </div>
     <div class="sub_body">
         <div style="margin-right: auto;">
-            <select class="form-select" aria-label="Default select example" style="width: 150px;">
+            <select class="form-select category" aria-label="Default select example" style="width: 150px; margin-right: 5px;">
                 <option selected>전체보기</option>
                 <option value="jjal">짤</option>
                 <option value="vdo">영상</option>
@@ -594,6 +688,13 @@
                         <div class="form-floating mb-3">
                             <button type="button" class="btn btn-outline-secondary" id="imgbtn">이미지</button>
                             <button type="button" class="btn btn-outline-secondary" id="vdobtn">동영상</button>
+                            <span class="persnalInputSection">
+                                <span>ID:</span>
+                                <input type="text" class="persnalInput" id="nickname" placeholder="닉네임" maxlength='8'>
+                                <span>PW:</span>
+                                <input type="password" class="persnalInput" id="password" placeholder="비밀번호"
+                                    maxlength='4'>
+                            </span>
                         </div>
                         <div class="form-floating mb-3">
                             <input type="email" class="form-control" id="image" placeholder="이미지 주소">
@@ -667,7 +768,7 @@
 
     <!-- 카드 리스트 -->
     <div class="card-group">
-        <div id="cards" class="row row-cols-1 row-cols-md-5 g-4">
+        <div id="cards" class="row row-cols-1 row-cols-md-3 g-4">
         </div>
     </div>
     </div>
