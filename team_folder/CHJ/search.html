@@ -155,7 +155,7 @@
         import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 
         // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -408,8 +408,8 @@
         sortedDocs.sort((a, b) => b.data().timestamp - a.data().timestamp);
 
         // 정렬된 문서를 이용하여 카드 생성
-        sortedDocs.forEach((doc) => {
-            let row = doc.data();
+        sortedDocs.forEach((d) => {
+            let row = d.data();
 
             let cardId = row['id'];
             let sourceType = row['isImage'];
@@ -472,6 +472,10 @@
                 const clickedCardId = this.getAttribute('data-id');
                 const clickedCardIsImage = this.getAttribute('data-is-image');
                 const clickedCardSource = this.getAttribute('data-source');
+
+                // 조회수 증가
+                const viewsField = doc(db, "memes", row.id);
+                await updateDoc(viewsField, { views: (row.views + 1) });
 
                 // 클릭된 카드의 id 값을 사용하여 모달 열기
                 if (clickedCardIsImage === "true") {
@@ -555,7 +559,8 @@
                     'title': title,
                     'year': year,
                     'content': content,
-                    'timestamp': new Date()
+                    'timestamp': new Date(),
+                    'views': 0
                 };
 
                 await setDoc(doc(db, "memes", String(id)), data);
@@ -659,7 +664,8 @@
     </div>
     <div class="sub_body">
         <div style="margin-right: auto;">
-            <select class="form-select category" aria-label="Default select example" style="width: 150px; margin-right: 5px;">
+            <select class="form-select category" aria-label="Default select example"
+                style="width: 150px; margin-right: 5px;">
                 <option selected>전체보기</option>
                 <option value="jjal">짤</option>
                 <option value="vdo">영상</option>
