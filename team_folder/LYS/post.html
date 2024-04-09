@@ -17,6 +17,7 @@
     import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
     import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
     import { getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"; //deleteDoc 추가해주세요
 
 
     // Firebase 구성 정보 설정
@@ -38,6 +39,13 @@
 
     // post용 modal 선언
     const postModal = new bootstrap.Modal(document.getElementById('postmodal'));
+    // post 삭제용 modal 선언
+    const removeModal = new bootstrap.Modal(document.getElementById('removemodal'));
+
+    // 현재 찾은 row 데이터 
+    let currentRow = null;
+    // 삭제할 타겟
+    let removeTarget = null;
 
     // 유튜브 동영상 id만 추출하기
     // https://www.youtube.com/watch?v=${id} 형식만 추출됨
@@ -85,6 +93,7 @@
 
     // mediaContainer 안에 videoContainer를 붙이는 함수
     // video id가 유효하지않으면 false 반환
+    // 2024.04.09 삭제기능 추가로 모달은 띄워주도록 변경
     function makeVideoContainer(mediaContainer, row) {
         // 유튜브 비디오 재생
         const videoContainer = document.createElement('div');
@@ -100,24 +109,25 @@
 
             videoContainer.appendChild(iframe);
             mediaContainer.appendChild(videoContainer);
-
-            return true;
         }
         else {
-            console.log("유효한 영상 주소가 아닙니다.");
             alert("유효한 영상 주소가 아닙니다.");
-
-            return false;
+            //return false;
         }
+        return true;
+    }
+
+    // 조회수 텍스트 만드는 함수
+    function makeViewerText(row){
+
+        let views = 0;
+        if ( row != null && row['views'] != null ){
+            views = row['views'];
+        }
+        return "조회수 " + views;
     }
 
     function openPostModal(row) {
-        //console.log(row['id']);
-        //console.log(row['isImage']);
-        //console.log(row['source']);
-        //console.log(row['title']);
-        //console.log(row['year']);
-        //console.log(row['content']);
 
         const mediaContainer = document.getElementById('mediaContainer');
         mediaContainer.innerHTML = '';
@@ -131,21 +141,29 @@
         }
 
         if (isShowModal) {
+            currentRow = row;
             const memeTitle = document.getElementById('memeTitle');
             const memeDate = document.getElementById('memeDate');
             const memeDescription = document.getElementById('memeDescription');
+            const memeAuthor = document.getElementById('memeAuthor');
+            const memeViewer = document.getElementById('memeViewer');
 
+            
             memeTitle.textContent = row['title'];
             memeDate.textContent = row['year']; //+ row['month']
 
             memeDescription.innerHTML = convertLinks(row['content']); // 하이퍼링크를 사용하는 경우 textContent 사용이 아닌 innerHTML 사용
+            memeAuthor.textContent = row['nickname'];
 
+            memeViewer.textContent = makeViewerText(row);
             postModal.show();
         }
     }
 
+
     // postModal이 닫힐 때 기존 유튜브 영상 비우기
     postModal._element.addEventListener('hidden.bs.modal', function () {
+
         const videoContainer = document.querySelector('.modal-video-container');
         if (videoContainer) {
             const iframe = videoContainer.querySelector('iframe');
@@ -155,7 +173,53 @@
                 iframe.src = videoSrc;
             }
         }
+        currentRow = null;
     });
+
+    removeModal._element.addEventListener('hidden.bs.modal', function () {
+
+        if (removeTarget) {
+            openPostModal(removeTarget);
+        }
+        const passwordInput = document.getElementById('password');
+        passwordInput.value = ''; // 입력 필드 값 지우기
+        removeTarget = null;
+    });
+
+
+    // 게시물 삭제 모달 띄우기
+    $("#removemodalbtn").click(async function () {
+
+        removeTarget = currentRow;
+        postModal.hide();
+
+        removeModal.show();
+    })
+
+    // 삭제 버튼 누를 시 발생할 일
+    $("#removebtn").click(async function () {
+        if (removeTarget) {
+            let password = $('#password').val();
+            if (password == removeTarget['password']) {
+                try {
+                    const documentId = removeTarget['id'];
+                    const documentRef = doc(db, "memes", documentId);
+                    await deleteDoc(documentRef);
+
+                    alert('삭제 완료!');
+                    removeModal.hide();
+                    window.location.reload();
+                }
+                catch (error) {
+                    alert(error);
+                }
+            }
+            else {
+                alert('비밀번호가 일치하지않습니다.');
+            }
+        }
+    })
+
 
     // class가 card인 것을 찾은 뒤 click 이벤트 등록
     // card가 동적으로 생성되므로 해당 코드를 그대로 사용하지말기
@@ -170,13 +234,6 @@
             docs.forEach((doc) => {
                 let row = doc.data();
 
-                console.log(row['id']);
-                //console.log(row['sourceType']);
-                //console.log(row['source']);
-                //console.log(row['title']);
-                //console.log(row['year']);
-                //console.log(row['content']);
-
                 if (row['id'] == cardId) {
                     openPostModal(row);
                     isFind = true;
@@ -184,7 +241,6 @@
             })
 
             if (!isFind) {
-                console.log("데이터를 찾지못했습니다.");
                 alert("데이터를 찾지 못했습니다");
             }
         });
@@ -195,13 +251,13 @@
 <body>
     <div class="card-group">
         <!-- 테스트용 카드, 카드 만들때 data-id 필요 -->
-        <div class="card" data-id="299a03c3-3504-1044-798c-0f07fcbee5bb">
+        <div class="card" data-id="b1e44c8b-9ff5-8414-55fa-cc6c7aa28f0a">
             <div class="card-body">
                 <h5 class="card-title">Card 1</h5>
                 <p class="card-text">Click to open popup.</p>
             </div>
         </div>
-        <div class="card" data-id="2a06ebc9-bcdd-48c8-622f-1a5dc3ef4b4f">
+        <div class="card" data-id="d904bc82-e55b-8220-513c-fec0028d8088">
             <div class="card-body">
                 <h5 class="card-title">Card 2</h5>
                 <p class="card-text">Click to open popup.</p>
@@ -209,19 +265,41 @@
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Post Modal -->
     <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-body">
                     <div id="mediaContainer"></div>
                     <h2 id="memeTitle"></h2>
                     <p id="memeDate"></p>
                     <p id="memeDescription"></p>
+                    <p id="memeAuthor"></p>
+                    <p id="memeViewer"></p>
                 </div>
 
                 <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-danger" id="removemodalbtn">삭제</button>
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Post Modal -->
+    <div class="modal fade" id="removemodal" tabindex="0" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <span class="persnalInputSection">
+                        <span>PW:</span>
+                        <input type="password" class="personalInput" id="password" placeholder="비밀번호" maxlength='4'>
+                    </span>
+                </div>
+
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-danger" id="removebtn">삭제</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">취소</button>
                 </div>
             </div>
         </div>
