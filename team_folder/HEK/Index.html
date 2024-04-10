@@ -565,7 +565,7 @@
         function checkEmpty() {
             // input 필드의 값을 가져옴
             let nickname = $('#nickname').val().trim();
-            let password = $('#modify-password').val().trim();
+            let password = $('#password').val().trim();
             let image = $('#image').val().trim();
             let video = $('#video').val().trim();
             let title = $('#title').val().trim();
@@ -594,7 +594,7 @@
         document.getElementById('year').addEventListener('change', checkEmpty);
         document.getElementById('content').addEventListener('input', checkEmpty);
         document.getElementById('nickname').addEventListener('input', checkEmpty);
-        document.getElementById('modify-password').addEventListener('input', checkEmpty);
+        document.getElementById('write-password').addEventListener('input', checkEmpty);
 
         // 수정하기 관련
         $('#modify-video').hide();
