@@ -853,7 +853,7 @@
         // 삭제 버튼 누를 시 발생할 일
         $("#removebtn").click(async function () {
             if (removeTarget) {
-                let password = $('#password').val();
+                let password = $('#remove-password').val();
                 if (password == removeTarget['password']) {
                     try {
                         const documentId = removeTarget['id'];
