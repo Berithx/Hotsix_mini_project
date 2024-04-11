@@ -49,7 +49,7 @@
 
         .card-group {
             width: 70%;
-            margin: 70px auto auto auto;
+            margin: 70px auto 70px auto;
 
             display: flex;
             flex-wrap: wrap;
@@ -274,7 +274,7 @@
 
         // HTML 형태의 결과를 화면에 출력
         function displayResult(row) {
-            const { content, id, isImage, source, timestamp, title, year } = row;
+            const { content, id, isImage, source, timestamp, title, views, year } = row;
             let thumbnail = source;
             if (!isImage) {
                 const videoId = getYouTubeVideoId(source);
@@ -291,6 +291,7 @@
                         <p class="card-text">${content}</p>
                     </div>
                     <div class="card-footer" style="text-align: right";>
+                        <small style="margin-right: auto;">조회수: ${views}</small>
                         <small>${year}년도</small>
                     </div>
                 </div>
@@ -444,50 +445,6 @@
             currentRow = null;
         });
 
-        removeModal._element.addEventListener('hidden.bs.modal', function () {
-
-            if (removeTarget) {
-                openPostModal(removeTarget);
-            }
-            const passwordInput = document.getElementById('password');
-            passwordInput.value = ''; // 입력 필드 값 지우기
-            removeTarget = null;
-        });
-
-
-        // 게시물 삭제 모달 띄우기
-        $("#removemodalbtn").click(async function () {
-
-            removeTarget = currentRow;
-            postModal.hide();
-
-            removeModal.show();
-        })
-
-        // 삭제 버튼 누를 시 발생할 일
-        $("#removebtn").click(async function () {
-            if (removeTarget) {
-                let password = $('#password').val();
-                if (password == removeTarget['password']) {
-                    try {
-                        const documentId = removeTarget['id'];
-                        const documentRef = doc(db, "memes", documentId);
-                        await deleteDoc(documentRef);
-
-                        alert('삭제 완료!');
-                        removeModal.hide();
-                        window.location.reload();
-                    }
-                    catch (error) {
-                        alert(error);
-                    }
-                }
-                else {
-                    alert('비밀번호가 일치하지않습니다.');
-                }
-            }
-        })
-
         // DB 자료 상 id를 기준으로 카드 생성
         let docs = await getDocs(collection(db, "memes"));
 
@@ -511,7 +468,9 @@
             let content = row['content'];
             let year = row['year'];
             let whenwrite = row['timestamp'];
+            let nick = row['nickname'];
             let views = row['views'];
+            let password = row['password'];
 
             let thumbnail; // 영상의 경우 썸네일 이미지로 사용될 변수
             // 영상인 경우 썸네일 이미지로 설정
@@ -584,7 +543,10 @@
                         'thumbnail': clickedCardThumbnail,
                         'title': title,
                         'year': year,
-                        'content': content
+                        'id': cardId,
+                        'content': content,
+                        'nickname': nick,
+                        'password': password
                     });
                 }
             });
@@ -653,13 +615,14 @@
                 let data = {
                     'id': id,
                     'nickname': nickname,
-                    'password': password,
+                    'write-password': password,
                     'isImage': isImage,
                     'source': source,
                     'title': title,
                     'year': year,
                     'content': content,
-                    'timestamp': new Date()
+                    'timestamp': new Date(),
+                    'views': 0
                 };
 
                 await setDoc(doc(db, "memes", String(id)), data);
@@ -676,7 +639,7 @@
         function checkEmpty() {
             // input 필드의 값을 가져옴
             let nickname = $('#nickname').val().trim();
-            let password = $('#password').val().trim();
+            let password = $('#write-password').val().trim();
             let image = $('#image').val().trim();
             let video = $('#video').val().trim();
             let title = $('#title').val().trim();
@@ -756,6 +719,7 @@
 
         // 게시물 수정 비밀번호 입력 모달 띄우기
         $("#modifymodalbtn").click(async function () {
+
             postModal.hide();
 
             modifyPasswordModal.show();
@@ -819,6 +783,50 @@
                 alert('주소를 확인해 주세요.');
             }
         });
+
+        removeModal._element.addEventListener('hidden.bs.modal', function () {
+
+            if (removeTarget) {
+                openPostModal(removeTarget);
+            }
+            const passwordInput = document.getElementById('password');
+            passwordInput.value = ''; // 입력 필드 값 지우기
+            removeTarget = null;
+        });
+
+
+        // 게시물 삭제 모달 띄우기
+        $("#removemodalbtn").click(async function () {
+
+            removeTarget = currentRow;
+            postModal.hide();
+
+            removeModal.show();
+        })
+
+        // 삭제 버튼 누를 시 발생할 일
+        $("#removebtn").click(async function () {
+            if (removeTarget) {
+                let password = $('#password').val();
+                if (password == removeTarget['password']) {
+                    try {
+                        const documentId = removeTarget['id'];
+                        const documentRef = doc(db, "memes", documentId);
+                        await deleteDoc(documentRef);
+
+                        alert('삭제 완료!');
+                        removeModal.hide();
+                        window.location.reload();
+                    }
+                    catch (error) {
+                        alert(error);
+                    }
+                }
+                else {
+                    alert('비밀번호가 일치하지않습니다.');
+                }
+            }
+        })
 
         // 보기방식 select 요소에서 값이 변경될 때마다 호출되는 이벤트 리스너 추가
         $("select.category").change(async function () {
@@ -991,6 +999,75 @@
         </div>
     </div>
 
+    <!-- 카드 리스트 -->
+    <div class="card-group">
+        <div id="cards" class="row row-cols-1 row-cols-md-3 g-4">
+        </div>
+    </div>
+    </div>
+
+    <!-- 카드 보기 Modal -->
+    <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div id="mediaContainer"></div>
+                    <h2 id="memeTitle"></h2>
+                    <p id="memeDate"></p>
+                    <p id="memeDescription"></p>
+                    <p id="memeAuthor"></p>
+                    <p id="memeViewer"></p>
+                </div>
+
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" id="modifymodalbtn">수정</button>
+                    <button type="button" class="btn btn-danger" id="removemodalbtn">삭제</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Post Modal -->
+    <div class="modal fade" id="removemodal" tabindex="0" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <span class="persnalInputSection">
+                        <span>PW:</span>
+                        <input type="password" class="personalInput" id="password" placeholder="비밀번호" maxlength='4'>
+                    </span>
+                </div>
+
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-danger" id="removebtn">삭제</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- modify Post Modal -->
+    <div class="modal fade" id="modify-passwordmodal" tabindex="0" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <span class="persnalInputSection">
+                        <span>PW:</span>
+                        <input type="password" class="personalInput" id="modify-password" placeholder="비밀번호"
+                            maxlength='4'>
+                    </span>
+                </div>
+
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" id="modify-confirmbtn">수정</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 수정하기 Modal -->
     <div class="modal fade" id="modifymodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -1066,95 +1143,6 @@
                         <button type="button" class="btn btn-primary" id="modifybtn" disabled>수정하기</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Post Modal -->
-    <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <div id="mediaContainer"></div>
-                    <h2 id="memeTitle"></h2>
-                    <p id="memeDate"></p>
-                    <p id="memeDescription"></p>
-                    <p id="memeAuthor"></p>
-                    <p id="memeViewer"></p>
-                </div>
-
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-secondary" id="modifymodalbtn">수정</button>
-                    <button type="button" class="btn btn-danger" id="removemodalbtn">삭제</button>
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">닫기</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- modify Post Modal -->
-    <div class="modal fade" id="modify-passwordmodal" tabindex="0" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <span class="persnalInputSection">
-                        <span>PW:</span>
-                        <input type="password" class="personalInput" id="modify-password" placeholder="비밀번호"
-                            maxlength='4'>
-                    </span>
-                </div>
-
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-secondary" id="modify-confirmbtn">수정</button>
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">취소</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 카드 리스트 -->
-    <div class="card-group">
-        <div id="cards" class="row row-cols-1 row-cols-md-3 g-4">
-        </div>
-    </div>
-    </div>
-
-    <!-- 카드 보기 Modal -->
-    <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <div id="mediaContainer"></div>
-                    <h2 id="memeTitle"></h2>
-                    <p id="memeDate"></p>
-                    <p id="memeDescription"></p>
-                    <p id="memeAuthor"></p>
-                    <p id="memeViewer"></p>
-                </div>
-
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-danger" id="removemodalbtn">삭제</button>
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">닫기</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Remove Post Modal -->
-    <div class="modal fade" id="removemodal" tabindex="0" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <span class="persnalInputSection">
-                        <span>PW:</span>
-                        <input type="password" class="personalInput" id="password" placeholder="비밀번호" maxlength='4'>
-                    </span>
-                </div>
-
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-danger" id="removebtn">삭제</button>
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">취소</button>
                 </div>
             </div>
         </div>
