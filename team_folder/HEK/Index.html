@@ -147,6 +147,14 @@
             width: 100px;
             height: 20px;
         }
+
+        .footer-btns {
+            margin: 0px auto 0px auto;
+        }
+
+        .modal-btns {
+            margin: 10px 10px 10px auto;
+        }
     </style>
 
     <script type="module">
@@ -154,7 +162,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        import { getDocs, orderBy, where, query } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 
@@ -172,6 +180,12 @@
         // Firebase 인스턴스 초기화
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        let currentRow = null;
+        // post 수정용 modal 비밀번호 입력창 선언
+        const modifyPasswordModal = new bootstrap.Modal(document.getElementById('modify-passwordmodal'));
+        // post 수정용 modal 선언
+        const modifyModal = new bootstrap.Modal(document.getElementById('modifymodal'));
 
         //헤드 메인로고 클릭 시 새로고침
         $("#home").click(async function () {
@@ -204,17 +218,6 @@
                     window.location.reload();
                 }
             }
-
-            // 각 카드에 대해 클릭 이벤트 리스너 다시 등록
-            $('.card').on('click', async function () {
-                const clickedCardId = $(this).data('id');
-
-                // 클릭된 카드의 id 값을 사용하여 모달 열기
-                let clickedDoc = sortedDocs.find(doc => doc.id === clickedCardId);
-                if (clickedDoc) {
-                    openPostModal(clickedDoc.data());
-                }
-            });
         });
 
         // 버튼 클릭으로 검색
@@ -241,44 +244,7 @@
                 alert("검색결과가 없습니다.");
                 window.location.reload();
             }
-
-            // 각 카드에 대해 클릭 이벤트 리스너 다시 등록
-            $('.card').on('click', async function () {
-                const clickedCardId = $(this).data('id');
-
-                // 클릭된 카드의 id 값을 사용하여 모달 열기
-                let clickedDoc = sortedDocs.find(doc => doc.id === clickedCardId);
-                if (clickedDoc) {
-                    openPostModal(clickedDoc.data());
-                }
-            });
         })
-
-        // 연도별 필터링 
-        $('#yearly').change(async function (e) {
-            const value = $(this).val();
-            console.log(value);
-            console.log(typeof(value));
-
-            const allDocs = await getDocs(query(collection(db, "memes"), where("year", "==", value)));
-
-            $('#cards').empty();
-
-            allDocs.forEach((doc) => {
-                displayResult(doc.data());
-            });
-
-            // 각 카드에 대해 클릭 이벤트 리스너 다시 등록
-            $('.card').on('click', async function () {
-                const clickedCardId = $(this).data('id');
-
-                // 클릭된 카드의 id 값을 사용하여 모달 열기
-                let clickedDoc = sortedDocs.find(doc => doc.id === clickedCardId);
-                if (clickedDoc) {
-                    openPostModal(clickedDoc.data());
-                }
-            });
-        });
 
         // HTML 형태의 결과를 화면에 출력
         function displayResult(row) {
@@ -395,6 +361,7 @@
             }
 
             if (isShowModal) {
+                currentRow = row;
                 const memeTitle = document.getElementById('memeTitle');
                 const memeDate = document.getElementById('memeDate');
                 const memeDescription = document.getElementById('memeDescription');
@@ -434,8 +401,8 @@
         sortedDocs.sort((a, b) => b.data().timestamp - a.data().timestamp);
 
         // 정렬된 문서를 이용하여 카드 생성
-        sortedDocs.forEach((d) => {
-            let row = d.data();
+        sortedDocs.forEach((doc) => {
+            let row = doc.data();
 
             let cardId = row['id'];
             let sourceType = row['isImage'];
@@ -499,10 +466,6 @@
                 const clickedCardIsImage = this.getAttribute('data-is-image');
                 const clickedCardSource = this.getAttribute('data-source');
 
-                // 조회수 증가
-                const viewsField = doc(db, "memes", row.id);
-                await updateDoc(viewsField, { views: (row.views + 1) });
-
                 // 클릭된 카드의 id 값을 사용하여 모달 열기
                 if (clickedCardIsImage === "true") {
                     // 이미지인 경우 모달에 이미지 출력
@@ -561,7 +524,7 @@
         $("#writebtn").click(async function () {
             let id = guid();
             let nickname = $('#nickname').val();
-            let password = $('#password').val();
+            let password = $('#write-password').val();
             let isImage = isImageTemp;
             let source;
             if (isImage) {
@@ -585,8 +548,7 @@
                     'title': title,
                     'year': year,
                     'content': content,
-                    'timestamp': new Date(),
-                    'views': 0
+                    'timestamp': new Date()
                 };
 
                 await setDoc(doc(db, "memes", String(id)), data);
@@ -632,7 +594,144 @@
         document.getElementById('year').addEventListener('change', checkEmpty);
         document.getElementById('content').addEventListener('input', checkEmpty);
         document.getElementById('nickname').addEventListener('input', checkEmpty);
-        document.getElementById('password').addEventListener('input', checkEmpty);
+        document.getElementById('write-password').addEventListener('input', checkEmpty);
+
+        // 수정하기 관련
+        $('#modify-video').hide();
+
+        $("#modify-imgbtn").click(async function () {
+            isImageTemp = true;
+            $('#modify-image').show();
+            $('#modify-video').hide();
+            checkEmpty();
+        })
+
+        $("#modify-vdobtn").click(async function () {
+            isImageTemp = false;
+            $('#modify-image').hide();
+            $('#modify-video').show();
+            checkEmpty();
+        })
+
+        // input 필드가 변경될 때마다 호출되는 함수
+        function checkEmptymodify() {
+            // input 필드의 값을 가져옴
+            let image = $('#modify-image').val().trim();
+            let video = $('#modify-video').val().trim();
+            let title = $('#modify-title').val().trim();
+            let year = document.getElementById('modify-year').selectedIndex;
+            let content = $('#modify-content').val().trim();
+
+            if (isImageTemp) {
+                if (image !== '' && title !== '' && year !== 0 && content !== '') {
+                    document.getElementById('modifybtn').disabled = false;
+                } else {
+                    document.getElementById('modifybtn').disabled = true;
+                }
+            } else {
+                if (video !== '' && title !== '' && year !== 0 && content !== '') {
+                    document.getElementById('modifybtn').disabled = false;
+                } else {
+                    document.getElementById('modifybtn').disabled = true;
+                }
+            }
+        }
+
+        document.getElementById('modify-image').addEventListener('input', checkEmptymodify);
+        document.getElementById('modify-video').addEventListener('input', checkEmptymodify);
+        document.getElementById('modify-title').addEventListener('input', checkEmptymodify);
+        document.getElementById('modify-year').addEventListener('change', checkEmptymodify);
+        document.getElementById('modify-content').addEventListener('input', checkEmptymodify);
+
+        // 게시물 수정 비밀번호 입력 모달 띄우기
+        $("#modifymodalbtn").click(async function () {
+            postModal.hide();
+
+            modifyPasswordModal.show();
+        })
+
+        // 게시물 수정
+        $("#modify-confirmbtn").click(async function () {
+            if (currentRow) {
+                let password = $('#modify-password').val();
+                console.log(password);
+                console.log(currentRow['password']);
+                if (password == currentRow['password']) {
+
+
+                    modifyPasswordModal.hide();
+
+                    modifyModal.show();
+
+                    console.log("Asd");
+                    if (currentRow['isImage']) {
+                        document.getElementById('modify-image').value = currentRow['source']
+                    } else {
+                        document.getElementById('modify-video').value = currentRow['source']
+                    }
+                    document.getElementById('modify-title').value = currentRow['title'];
+                    document.getElementById('modify-year').value = currentRow['year'];
+                    document.getElementById('modify-content').value = currentRow['content'];
+                }
+                else {
+                    alert('비밀번호가 일치하지않습니다.');
+                }
+            }
+        });
+
+        $("#modifybtn").click(async function () {
+            let source;
+            if (currentRow['isImage']) {
+                source = $('#modify-image').val();
+            } else {
+                source = $('#modify-video').val();
+            }
+            let title = $('#modify-title').val();
+            let year = $('#modify-year').val();
+            let content = $('#modify-content').val();
+
+            // 입력된 값이 유효한 URL인지 확인
+            if (isValidURL(source)) {
+                // 유효한 URL인 경우 업로드
+                await updateDoc(doc(db, "memes", String(currentRow['id'])), {
+                    'isImage': currentRow['isImage'],
+                    'source': source,
+                    'title': title,
+                    'year': year,
+                    'content': content
+                });
+                window.location.reload();
+
+                alert('수정 성공!');
+            } else {
+                // 유효하지 않은 URL인 경우 경고 표시
+                alert('주소를 확인해 주세요.');
+            }
+        });
+
+        // 삭제 버튼 누를 시 발생할 일
+        $("#removebtn").click(async function () {
+            if (removeTarget) {
+                let password = $('#password').val();
+                if (password == removeTarget['password']) {
+                    try {
+                        const documentId = removeTarget['id'];
+                        const documentRef = doc(db, "memes", documentId);
+                        await deleteDoc(documentRef);
+
+                        alert('삭제 완료!');
+                        removeModal.hide();
+                        window.location.reload();
+                    }
+                    catch (error) {
+                        alert(error);
+                    }
+                }
+                else {
+                    alert('비밀번호가 일치하지않습니다.');
+                }
+            }
+        })
 
         // select 요소에서 값이 변경될 때마다 호출되는 이벤트 리스너 추가
         $("select.category").change(async function () {
@@ -696,47 +795,6 @@
                 <option value="jjal">짤</option>
                 <option value="vdo">영상</option>
             </select>
-
-            <select class="form-select" id="yearly" aria-label="Default select example"
-                style="width: 150px; margin-right: 5px;">
-                <option selected>연도 선택</option>
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
-                <option value="2022">2022</option>
-                <option value="2021">2021</option>
-                <option value="2020">2020</option>
-                <option value="2019">2019</option>
-                <option value="2018">2018</option>
-                <option value="2017">2017</option>
-                <option value="2016">2016</option>
-                <option value="2015">2015</option>
-                <option value="2014">2014</option>
-                <option value="2013">2013</option>
-                <option value="2012">2012</option>
-                <option value="2010">2010</option>
-                <option value="2009">2009</option>
-                <option value="2008">2008</option>
-                <option value="2007">2007</option>
-                <option value="2006">2006</option>
-                <option value="2005">2005</option>
-                <option value="2004">2004</option>
-                <option value="2003">2003</option>
-                <option value="2002">2002</option>
-                <option value="2001">2001</option>
-                <option value="2000">2000</option>
-                <option value="1999">1999</option>
-                <option value="1998">1998</option>
-                <option value="1997">1997</option>
-                <option value="1996">1996</option>
-                <option value="1995">1995</option>
-                <option value="1994">1994</option>
-                <option value="1993">1993</option>
-                <option value="1992">1992</option>
-                <option value="1991">1991</option>
-                <option value="1990">1990</option>
-            </select>
-
-
         </div>
 
         <div style="width: 30%;">
@@ -765,7 +823,7 @@
                                 <span>ID:</span>
                                 <input type="text" class="persnalInput" id="nickname" placeholder="닉네임" maxlength='8'>
                                 <span>PW:</span>
-                                <input type="password" class="persnalInput" id="password" placeholder="비밀번호"
+                                <input type="password" class="persnalInput" id="write-password" placeholder="비밀번호"
                                     maxlength='4'>
                             </span>
                         </div>
@@ -839,6 +897,86 @@
         </div>
     </div>
 
+    <!-- 수정하기 Modal -->
+    <div class="modal fade" id="modifymodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="mypostingbox" id="postingbox">
+                        <div class="form-floating mb-3">
+                            <button type="button" class="btn btn-outline-secondary" id="modify-imgbtn">이미지</button>
+                            <button type="button" class="btn btn-outline-secondary" id="modify-vdobtn">동영상</button>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="modify-image" placeholder="이미지 주소">
+                            <label for="floatingInput">이미지 주소</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="modify-video" placeholder="동영상 주소">
+                            <label for="floatingInput">동영상 주소</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="modify-title" placeholder="밈 이름">
+                            <label for="floatingInput">밈 이름</label>
+                        </div>
+                        <div class="input-group mb-3">
+                            <label class="input-group-text" for="inputGroupSelect01">유행 년도</label>
+                            <select class="form-select" id="modify-year">
+                                <option selected>년도 선택</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                                <option value="2022">2022</option>
+                                <option value="2021">2021</option>
+                                <option value="2020">2020</option>
+                                <option value="2019">2019</option>
+                                <option value="2018">2018</option>
+                                <option value="2017">2017</option>
+                                <option value="2016">2016</option>
+                                <option value="2015">2015</option>
+                                <option value="2014">2014</option>
+                                <option value="2013">2013</option>
+                                <option value="2012">2012</option>
+                                <option value="2010">2010</option>
+                                <option value="2009">2009</option>
+                                <option value="2008">2008</option>
+                                <option value="2007">2007</option>
+                                <option value="2006">2006</option>
+                                <option value="2005">2005</option>
+                                <option value="2004">2004</option>
+                                <option value="2003">2003</option>
+                                <option value="2002">2002</option>
+                                <option value="2001">2001</option>
+                                <option value="2000">2000</option>
+                                <option value="1999">1999</option>
+                                <option value="1998">1998</option>
+                                <option value="1997">1997</option>
+                                <option value="1996">1996</option>
+                                <option value="1995">1995</option>
+                                <option value="1994">1994</option>
+                                <option value="1993">1993</option>
+                                <option value="1992">1992</option>
+                                <option value="1991">1991</option>
+                                <option value="1990">1990</option>
+                            </select>
+                        </div>
+                        <p>내용</p>
+                        <div class="form-floating">
+                            <textarea class="form-control" maxlength='500' placeholder="내용" id="modify-content"
+                                style="height: 100px"></textarea>
+                            <label for="floatingTextarea2">(500자 이하)</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="footer-btns">
+                        <button type="button" class="btn btn-primary" id="modifybtn" disabled>수정하기</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 카드 리스트 -->
     <div class="card-group">
         <div id="cards" class="row row-cols-1 row-cols-md-3 g-4">
@@ -846,23 +984,46 @@
     </div>
     </div>
 
-    <!-- 카드 보기 Modal -->
+    <!-- Post Modal -->
     <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-body">
                     <div id="mediaContainer"></div>
                     <h2 id="memeTitle"></h2>
                     <p id="memeDate"></p>
                     <p id="memeDescription"></p>
+                    <p id="memeAuthor"></p>
+                    <p id="memeViewer"></p>
                 </div>
 
                 <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" id="modifymodalbtn">수정</button>
+                    <button type="button" class="btn btn-danger" id="removemodalbtn">삭제</button>
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">닫기</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- modify Post Modal -->
+    <div class="modal fade" id="modify-passwordmodal" tabindex="0" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <span class="persnalInputSection">
+                        <span>PW:</span>
+                        <input type="password" class="personalInput" id="modify-password" placeholder="비밀번호" maxlength='4'>
+                    </span>
+                </div>
+
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" id="modify-confirmbtn">수정</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">취소</button>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 
