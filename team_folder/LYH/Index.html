@@ -18,18 +18,37 @@
             cursor: pointer;
         }
 
-        .header {
+        header {
+            margin: 0px auto 0px auto;
             width: 75%;
             height: 100px;
-            color: black;
             border-bottom: 2px solid gray;
-            margin: 50px auto auto auto;
+            padding-bottom: 10px;
+            margin: 20px auto auto auto;
             box-shadow: 0px 2px 0px gray;
+            text-align: center;
 
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+        }
+
+        .logo {
+            width: 90px;
+            height: 90px;
+            position: relative;
+            background-image: url(./logo.png);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: left;
+        }
+
+        .home{
+            width: 75%;
+            position: absolute;
+            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .sub_body {
@@ -301,13 +320,9 @@
 
         // post용 modal 선언
         const postModal = new bootstrap.Modal(document.getElementById('postmodal'));
+
         // post 삭제용 modal 선언
         const removeModal = new bootstrap.Modal(document.getElementById('removemodal'));
-
-        // 현재 찾은 row 데이터 
-        let currentRow = null;
-        // 삭제할 타겟
-        let removeTarget = null;
 
         // 유튜브 동영상 id만 추출하기
         // https://www.youtube.com/watch?v=${id} 형식만 추출됨
@@ -471,6 +486,7 @@
             let nick = row['nickname'];
             let views = row['views'];
             let password = row['password'];
+            let id = row['id'];
 
             let thumbnail; // 영상의 경우 썸네일 이미지로 사용될 변수
             // 영상인 경우 썸네일 이미지로 설정
@@ -543,20 +559,14 @@
                         'thumbnail': clickedCardThumbnail,
                         'title': title,
                         'year': year,
-                        'id': cardId,
                         'content': content,
-                        'nickname': nick,
-                        'password': password
+                        'password': password,
+                        'id': id,
+                        'nickname': nick
                     });
                 }
             });
         });
-
-        // post 수정용 modal 비밀번호 입력창 선언
-        const modifyPasswordModal = new bootstrap.Modal(document.getElementById('modify-passwordmodal'));
-
-        // post 수정용 modal 선언
-        const modifyModal = new bootstrap.Modal(document.getElementById('modifymodal'));
 
         // 글쓰기 모달
         let isImageTemp = true;
@@ -670,6 +680,24 @@
         document.getElementById('nickname').addEventListener('input', checkEmpty);
         document.getElementById('write-password').addEventListener('input', checkEmpty);
 
+        // post 수정용 modal 비밀번호 입력창 선언
+        const modifyPasswordModal = new bootstrap.Modal(document.getElementById('modify-passwordmodal'));
+
+        // post 수정용 modal 선언
+        const modifyModal = new bootstrap.Modal(document.getElementById('modifymodal'));
+
+        // !@ 패스워드 모달에 전달할 row 데이터
+        let modifyPasswordTarget = null;
+
+        // !@ 수정 모달에 전달할 row 데이터
+        let modifyTarget = null;
+
+        // 현재 찾은 row 데이터 
+        let currentRow = null;
+
+        // 삭제할 타겟
+        let removeTarget = null;
+
         // 수정하기 관련
         $('#modify-video').hide();
 
@@ -717,9 +745,27 @@
         document.getElementById('modify-year').addEventListener('change', checkEmptymodify);
         document.getElementById('modify-content').addEventListener('input', checkEmptymodify);
 
+        // !@ modify password Modal 닫을 때 처리
+        modifyPasswordModal._element.addEventListener('hidden.bs.modal', function () {
+            if (modifyPasswordTarget) {
+                openPostModal(modifyPasswordTarget);
+            }
+            modifyPasswordTarget = null;
+            const passwordInput = document.getElementById('modify-password');
+            passwordInput.value = ''; // 입력 필드 값 지우기
+        });
+
+        // modify Modal 닫을 때 처리
+        modifyModal._element.addEventListener('hidden.bs.modal', function () {
+            if (modifyTarget) {
+                openPostModal(modifyTarget);
+            }
+            modifyTarget = null;
+        });
+
         // 게시물 수정 비밀번호 입력 모달 띄우기
         $("#modifymodalbtn").click(async function () {
-
+            modifyPasswordTarget = currentRow;// modifyPasswordTarget에 currentRow 넘겨주기
             postModal.hide();
 
             modifyPasswordModal.show();
@@ -727,26 +773,26 @@
 
         // 게시물 수정
         $("#modify-confirmbtn").click(async function () {
-            if (currentRow) {
+            if (modifyPasswordTarget) {// !@
                 let password = $('#modify-password').val();
                 console.log(password);
-                console.log(currentRow['password']);
-                if (password == currentRow['password']) {
+                if (password == modifyPasswordTarget['password']) {// !@
 
-
+                    modifyTarget = modifyPasswordTarget; // !@ modifyTarget에 넘겨주기
+                    modifyPasswordTarget = null; // !@ 다시 안뜨게 미리 null 처리
                     modifyPasswordModal.hide();
 
                     modifyModal.show();
 
                     console.log("Asd");
-                    if (currentRow['isImage']) {
-                        document.getElementById('modify-image').value = currentRow['source']
+                    if (modifyTarget['isImage']) {// !@
+                        document.getElementById('modify-image').value = modifyTarget['source']// !@
                     } else {
-                        document.getElementById('modify-video').value = currentRow['source']
+                        document.getElementById('modify-video').value = modifyTarget['source']// !@
                     }
-                    document.getElementById('modify-title').value = currentRow['title'];
-                    document.getElementById('modify-year').value = currentRow['year'];
-                    document.getElementById('modify-content').value = currentRow['content'];
+                    document.getElementById('modify-title').value = modifyTarget['title'];// !@
+                    document.getElementById('modify-year').value = modifyTarget['year'];// !@
+                    document.getElementById('modify-content').value = modifyTarget['content'];// !@
                 }
                 else {
                     alert('비밀번호가 일치하지않습니다.');
@@ -756,7 +802,7 @@
 
         $("#modifybtn").click(async function () {
             let source;
-            if (currentRow['isImage']) {
+            if (modifyTarget['isImage']) {// !@
                 source = $('#modify-image').val();
             } else {
                 source = $('#modify-video').val();
@@ -768,8 +814,8 @@
             // 입력된 값이 유효한 URL인지 확인
             if (isValidURL(source)) {
                 // 유효한 URL인 경우 업로드
-                await updateDoc(doc(db, "memes", String(currentRow['id'])), {
-                    'isImage': currentRow['isImage'],
+                await updateDoc(doc(db, "memes", String(modifyTarget['id'])), {// !@
+                    'isImage': modifyTarget['isImage'],// !@
                     'source': source,
                     'title': title,
                     'year': year,
@@ -789,7 +835,7 @@
             if (removeTarget) {
                 openPostModal(removeTarget);
             }
-            const passwordInput = document.getElementById('password');
+            const passwordInput = document.getElementById('remove-password');
             passwordInput.value = ''; // 입력 필드 값 지우기
             removeTarget = null;
         });
@@ -879,23 +925,19 @@
 </head>
 
 <body>
-    <div class="header">
-        <h1 class="home" id="home">Meme</h1>
-    </div>
+    <header>
+        <div class="logo">
+        </div>
+        <div class="home" id="home">
+            <h1>Meme</h1>
+        </div>
+    </header>
     <div class="sub_body">
         <div style="margin-right: auto;">
             <select class="form-select category" aria-label="Default select example" style="width: 150px;">
                 <option selected>전체보기</option>
                 <option value="jjal">짤</option>
                 <option value="vdo">영상</option>
-            </select>
-        </div>
-
-        <div style="margin-right: 20px;">
-            <select class="form-select sort" aria-label="Default select example" style="width: 200px;">
-                <option selected>정렬방식</option>
-                <option value="jjal">조회수 높은 순</option>
-                <option value="vdo">추천 많은 순</option>
             </select>
         </div>
 
@@ -1006,7 +1048,7 @@
     </div>
     </div>
 
-    <!-- 카드 보기 Modal -->
+    <!-- Post Modal -->
     <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
@@ -1035,7 +1077,8 @@
                 <div class="modal-body">
                     <span class="persnalInputSection">
                         <span>PW:</span>
-                        <input type="password" class="personalInput" id="password" placeholder="비밀번호" maxlength='4'>
+                        <input type="password" class="personalInput" id="remove-password" placeholder="비밀번호"
+                            maxlength='4'>
                     </span>
                 </div>
 
