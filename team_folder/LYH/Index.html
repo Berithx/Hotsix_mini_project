@@ -276,24 +276,21 @@
         function displayResult(row) {
             const { content, id, isImage, source, timestamp, title, year } = row;
             let thumbnail = source;
-
             if (!isImage) {
                 const videoId = getYouTubeVideoId(source);
                 if (videoId) {
-                    thumbnail = 'https://img.youtube.com/vi/${videoId}/hqdefault.jpg';
+                    thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
                 }
             }
-
             const temp_html = `
             <div class="col">
-                <div class="card" data-id="${id}" data-is-image="${isImage}" date-source="${source}" style="height: 100%;">
+                <div class="card" data-id="${id}" data-is-image="${isImage}" data-source="${source}" style="height: 100%;">
                     <img src="${thumbnail}" class="card-img-top" alt="...">
                     <div class="card-body">
                         <h5 class="card-title">${title}</h5>
                         <p class="card-text">${content}</p>
                     </div>
-                    <div class="card-footer">
-                        <small style="margin-right: auto;">조회수: ${views}</small>
+                    <div class="card-footer" style="text-align: right";>
                         <small>${year}년도</small>
                     </div>
                 </div>
@@ -595,9 +592,9 @@
 
         // post 수정용 modal 비밀번호 입력창 선언
         const modifyPasswordModal = new bootstrap.Modal(document.getElementById('modify-passwordmodal'));
+
         // post 수정용 modal 선언
         const modifyModal = new bootstrap.Modal(document.getElementById('modifymodal'));
-
 
         // 글쓰기 모달
         let isImageTemp = true;
@@ -1073,28 +1070,6 @@
             </div>
         </div>
     </div>
-
-    <!-- modify Post Modal -->
-    <div class="modal fade" id="modify-passwordmodal" tabindex="0" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <span class="persnalInputSection">
-                        <span>PW:</span>
-                        <input type="password" class="personalInput" id="modify-password" placeholder="비밀번호"
-                            maxlength='4'>
-                    </span>
-                </div>
-
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-secondary" id="modify-confirmbtn">수정</button>
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">취소</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Post Modal -->
     <div class="modal fade" id="postmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -1117,6 +1092,26 @@
         </div>
     </div>
 
+    <!-- modify Post Modal -->
+    <div class="modal fade" id="modify-passwordmodal" tabindex="0" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <span class="persnalInputSection">
+                        <span>PW:</span>
+                        <input type="password" class="personalInput" id="modify-password" placeholder="비밀번호"
+                            maxlength='4'>
+                    </span>
+                </div>
+
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" id="modify-confirmbtn">수정</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- 카드 리스트 -->
     <div class="card-group">
