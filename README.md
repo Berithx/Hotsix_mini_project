@@ -14,7 +14,7 @@
       <td align="center"><a href="https://github.com/MetroDefro"><img src="https://avatars.githubusercontent.com/u/65336674?v=4" width="100px;" alt=""/><br /><sub><b> 팀원 : 김혜은 </b></sub></a><br /></td>
       <td align="center"><a href="https://github.com/lis0517"><img src="https://avatars.githubusercontent.com/u/43354156?v=4" width="100px;" alt=""/><br /><sub><b> 팀원 : 이윤성 </b></sub></a><br /></td>
       <td align="center"><a href="https://github.com/JangJaehyeonn"><img src="https://avatars.githubusercontent.com/u/96277705?v=4" width="100px;" alt=""/><br /><sub><b> 팀원 : 장재현 </b></sub></a><br /></td>
-      <td align="center"><a href="https://github.com/HyeonjinChoi"><img src="https://avatars.githubusercontent.com/u/63872787?v=4" width="100px;" alt=""/><br /><sub><b> 팀원 : 최현 </b></sub></a><br /></td>
+      <td align="center"><a href="https://github.com/HyeonjinChoi"><img src="https://avatars.githubusercontent.com/u/63872787?v=4" width="100px;" alt=""/><br /><sub><b> 팀원 : 최현진 </b></sub></a><br /></td>
     </tr>
   </tbody>
 </table>
